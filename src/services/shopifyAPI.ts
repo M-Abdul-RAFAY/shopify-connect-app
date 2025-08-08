@@ -298,7 +298,7 @@ class ShopifyAPI {
       "read_products,read_orders,read_customers,read_shop";
     const redirectUri =
       import.meta.env.VITE_SHOPIFY_REDIRECT_URI ||
-      "https://16d791950278.ngrok-free.app/auth/callback";
+      "https://0124c68cd808.ngrok-free.app/auth/callback";
     const state = Math.random().toString(36).substring(7);
 
     Cookies.set("shopify_oauth_state", state, { expires: 1 });
@@ -328,7 +328,7 @@ class ShopifyAPI {
       "read_products,read_orders,read_customers,read_shop";
     const redirectUri =
       import.meta.env.VITE_SHOPIFY_REDIRECT_URI ||
-      "https://16d791950278.ngrok-free.app/auth/callback";
+      "https://0124c68cd808.ngrok-free.app/auth/callback";
     const state = Math.random().toString(36).substring(7);
 
     Cookies.set("shopify_oauth_state", state, { expires: 1 });
@@ -371,7 +371,7 @@ class ShopifyAPI {
     // Use backend proxy instead of direct Shopify API call
     const backendUrl =
       import.meta.env.VITE_API_BASE_URL ||
-      "https://16d791950278.ngrok-free.app/api";
+      "https://0124c68cd808.ngrok-free.app/api";
     const tokenUrl = `${backendUrl}/shopify/exchange-token`;
 
     console.log("Token exchange URL (via backend):", tokenUrl);
@@ -437,6 +437,7 @@ class ShopifyAPI {
       console.log(
         `Making ${method} request via backend proxy: /api/shopify/proxy${endpoint}`
       );
+      console.log(`Shop domain: ${this.shop}`);
 
       const response = await axios({
         method,
@@ -444,7 +445,7 @@ class ShopifyAPI {
         headers: {
           "Content-Type": "application/json",
           "X-Shopify-Access-Token": this.accessToken,
-          "X-Shop-Domain": this.shop,
+          "x-shop-domain": this.shop, // Use lowercase header name for consistency
         },
         data: data ? JSON.stringify(data) : undefined,
       });

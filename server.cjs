@@ -9,14 +9,16 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://16d791950278.ngrok-free.app"],
+    origin: ["http://localhost:5173", "https://0124c68cd808.ngrok-free.app"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
       "Authorization",
       "X-Shopify-Access-Token",
+      "x-shopify-access-token",
       "X-Shop-Domain",
+      "x-shop-domain",
     ],
   })
 );
@@ -93,8 +95,12 @@ app.post("/api/shopify/exchange-token", async (req, res) => {
 // Shopify API proxy endpoint
 app.all("/api/shopify/proxy/*", async (req, res) => {
   try {
-    const accessToken = req.headers["x-shopify-access-token"];
-    const shopDomain = req.headers["x-shop-domain"];
+    // Handle both uppercase and lowercase header variations
+    const accessToken =
+      req.headers["x-shopify-access-token"] ||
+      req.headers["X-Shopify-Access-Token"];
+    const shopDomain =
+      req.headers["x-shop-domain"] || req.headers["X-Shop-Domain"];
 
     console.log("Proxy request headers:", {
       "x-shopify-access-token": accessToken
@@ -114,12 +120,33 @@ app.all("/api/shopify/proxy/*", async (req, res) => {
 
     // Extract the Shopify API endpoint from the path
     const shopifyEndpoint = req.path.replace("/api/shopify/proxy", "");
-    const shopifyUrl = `https://${shopDomain}.myshopify.com/admin/api/2023-10${shopifyEndpoint}`;
+
+    // Ensure we're using the full .myshopify.com domain
+    let fullShopDomain = shopDomain;
+    if (!shopDomain.includes(".myshopify.com")) {
+      fullShopDomain = `${shopDomain}.myshopify.com`;
+    }
+
+    const shopifyUrl = `https://${fullShopDomain}/admin/api/2024-07${shopifyEndpoint}`;
 
     console.log(`Proxying ${req.method} request to: ${shopifyUrl}`);
+    
+    // Prepare headers - don't send Content-Type for GET requests
+    const headers = {
+      "X-Shopify-Access-Token": accessToken,
+      "User-Agent": "Shopify-Connect-App/1.0",
+      Accept: "application/json",
+    };
+    
+    // Only add Content-Type for requests with body data
+    if (req.method !== "GET" && req.body && Object.keys(req.body).length > 0) {
+      headers["Content-Type"] = "application/json";
+    }
+
     console.log("Request headers to Shopify:", {
       "X-Shopify-Access-Token": `${accessToken.substring(0, 10)}...`,
-      "Content-Type": "application/json",
+      "User-Agent": headers["User-Agent"],
+      "Content-Type": headers["Content-Type"] || "not set",
     });
     console.log("Full access token:", accessToken);
     console.log("Request query params:", req.query);
@@ -128,12 +155,8 @@ app.all("/api/shopify/proxy/*", async (req, res) => {
     const response = await axios({
       method: req.method,
       url: shopifyUrl,
-      headers: {
-        "X-Shopify-Access-Token": accessToken,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      data: req.body,
+      headers: headers,
+      data: req.method !== "GET" ? req.body : undefined,
       params: req.query,
       timeout: 10000,
     });

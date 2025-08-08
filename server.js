@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://16d791950278.ngrok-free.app"],
+    origin: ["http://localhost:5173", "https://0124c68cd808.ngrok-free.app"],
     credentials: true,
   })
 );
