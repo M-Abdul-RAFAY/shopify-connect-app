@@ -131,7 +131,7 @@ app.all("/api/shopify/proxy/*", async (req, res) => {
       headers: {
         "X-Shopify-Access-Token": accessToken,
         "Content-Type": "application/json",
-        "Accept": "application/json",
+        Accept: "application/json",
       },
       data: req.body,
       params: req.query,
