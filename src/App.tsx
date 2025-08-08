@@ -1,63 +1,108 @@
-import React, { useState } from 'react';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  CreditCard, 
-  Users, 
-  Truck, 
-  BarChart3, 
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  CreditCard,
+  Users,
+  Truck,
+  BarChart3,
   Settings,
   Bell,
   Search,
   User,
   ChevronDown,
   Menu,
-  X
-} from 'lucide-react';
-import Dashboard from './components/Dashboard';
-import Inventory from './components/Inventory';
-import Orders from './components/Orders';
-import POS from './components/POS';
-import Customers from './components/Customers';
-import Fulfillment from './components/Fulfillment';
-import Analytics from './components/Analytics';
+  X,
+  LogOut,
+  RefreshCw,
+} from "lucide-react";
+import { ShopifyProvider, useShopify } from "./contexts/ShopifyContext";
+import Dashboard from "./components/Dashboard";
+import DashboardShopify from "./components/DashboardShopify";
+import Inventory from "./components/Inventory";
+import InventoryShopify from "./components/InventoryShopify";
+import Orders from "./components/Orders";
+import POS from "./components/POS";
+import Customers from "./components/Customers";
+import CustomersShopify from "./components/CustomersShopify";
+import Fulfillment from "./components/Fulfillment";
+import Analytics from "./components/Analytics";
+import ShopifyConnect from "./components/ShopifyConnect";
+import AuthCallback from "./components/AuthCallback";
 
-type Module = 'dashboard' | 'inventory' | 'orders' | 'pos' | 'customers' | 'fulfillment' | 'analytics' | 'settings';
+type Module =
+  | "dashboard"
+  | "inventory"
+  | "orders"
+  | "pos"
+  | "customers"
+  | "fulfillment"
+  | "analytics"
+  | "settings";
 
 const navigation = [
-  { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
-  { id: 'inventory', name: 'Inventory', icon: Package },
-  { id: 'orders', name: 'Orders', icon: ShoppingCart },
-  { id: 'pos', name: 'Point of Sale', icon: CreditCard },
-  { id: 'customers', name: 'Customers', icon: Users },
-  { id: 'fulfillment', name: 'Fulfillment', icon: Truck },
-  { id: 'analytics', name: 'Analytics', icon: BarChart3 },
-  { id: 'settings', name: 'Settings', icon: Settings },
+  { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
+  { id: "inventory", name: "Inventory", icon: Package },
+  { id: "orders", name: "Orders", icon: ShoppingCart },
+  { id: "pos", name: "Point of Sale", icon: CreditCard },
+  { id: "customers", name: "Customers", icon: Users },
+  { id: "fulfillment", name: "Fulfillment", icon: Truck },
+  { id: "analytics", name: "Analytics", icon: BarChart3 },
+  { id: "settings", name: "Settings", icon: Settings },
 ];
 
-function App() {
-  const [activeModule, setActiveModule] = useState<Module>('dashboard');
+const MainApp: React.FC = () => {
+  const [activeModule, setActiveModule] = useState<Module>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isConnected, isLoading, shopData, disconnectShop, refreshShopData } =
+    useShopify();
+
+  // Debug logging
+  console.log("MainApp - Current state:", {
+    isConnected,
+    isLoading,
+    hasShopData: !!shopData,
+  });
+
+  // Show connection screen if not connected
+  if (!isConnected && !isLoading) {
+    console.log("MainApp - Showing ShopifyConnect (not connected)");
+    return <ShopifyConnect />;
+  }
+
+  // Show loading screen while checking connection
+  if (isLoading) {
+    console.log("MainApp - Showing loading screen");
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your store data...</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderModule = () => {
     switch (activeModule) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'inventory':
-        return <Inventory />;
-      case 'orders':
+      case "dashboard":
+        return isConnected ? <DashboardShopify /> : <Dashboard />;
+      case "inventory":
+        return isConnected ? <InventoryShopify /> : <Inventory />;
+      case "orders":
         return <Orders />;
-      case 'pos':
+      case "pos":
         return <POS />;
-      case 'customers':
-        return <Customers />;
-      case 'fulfillment':
+      case "customers":
+        return isConnected ? <CustomersShopify /> : <Customers />;
+      case "fulfillment":
         return <Fulfillment />;
-      case 'analytics':
+      case "analytics":
         return <Analytics />;
       default:
-        return <Dashboard />;
+        return isConnected ? <DashboardShopify /> : <Dashboard />;
     }
   };
 
@@ -72,16 +117,20 @@ function App() {
       )}
 
       {/* Sidebar */}
-      <div className={`
+      <div
+        className={`
         fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}
+      >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
               <Package className="w-5 h-5 text-white" />
             </div>
-            <span className="ml-3 text-xl font-bold text-gray-900">RetailPro</span>
+            <span className="ml-3 text-xl font-bold text-gray-900">
+              RetailPro
+            </span>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -90,7 +139,28 @@ function App() {
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
+        {/* Store Info */}
+        {shopData && (
+          <div className="px-4 py-3 border-b border-gray-200 bg-blue-50">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <span className="text-blue-600 font-bold text-sm">
+                  {shopData.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="ml-3 flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {shopData.name}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {shopData.domain}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <nav className="flex-1 px-4 py-4 space-y-1">
           {navigation.map((item) => {
             const Icon = item.icon;
@@ -103,9 +173,10 @@ function App() {
                 }}
                 className={`
                   w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
-                  ${activeModule === item.id
-                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  ${
+                    activeModule === item.id
+                      ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
+                      : "text-gray-700 hover:bg-gray-100"
                   }
                 `}
               >
@@ -115,6 +186,26 @@ function App() {
             );
           })}
         </nav>
+
+        {/* Store Actions */}
+        <div className="p-4 border-t border-gray-200">
+          <div className="space-y-2">
+            <button
+              onClick={refreshShopData}
+              className="w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <RefreshCw className="w-4 h-4 mr-3" />
+              Refresh Data
+            </button>
+            <button
+              onClick={disconnectShop}
+              className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <LogOut className="w-4 h-4 mr-3" />
+              Disconnect Store
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Main content */}
@@ -140,7 +231,7 @@ function App() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <button className="relative p-2 rounded-lg hover:bg-gray-100">
                 <Bell className="w-5 h-5 text-gray-600" />
@@ -148,13 +239,15 @@ function App() {
                   3
                 </span>
               </button>
-              
+
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                   <User className="w-5 h-5 text-gray-600" />
                 </div>
                 <div className="hidden md:block">
-                  <div className="text-sm font-medium text-gray-900">John Doe</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {shopData?.shop_owner || "Store Owner"}
+                  </div>
                   <div className="text-xs text-gray-500">Store Manager</div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -164,11 +257,22 @@ function App() {
         </header>
 
         {/* Main content area */}
-        <main className="flex-1 p-6 overflow-auto">
-          {renderModule()}
-        </main>
+        <main className="flex-1 p-6 overflow-auto">{renderModule()}</main>
       </div>
     </div>
+  );
+};
+
+function App() {
+  return (
+    <ShopifyProvider>
+      <Router>
+        <Routes>
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/*" element={<MainApp />} />
+        </Routes>
+      </Router>
+    </ShopifyProvider>
   );
 }
 

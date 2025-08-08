@@ -1,0 +1,144 @@
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { shopifyAPI, ShopifyStore } from "../services/shopifyAPI";
+
+interface ShopifyContextType {
+  isConnected: boolean;
+  isLoading: boolean;
+  shopData: ShopifyStore | null;
+  error: string | null;
+  isDemoMode: boolean;
+  connectShop: (shopDomain: string) => Promise<void>;
+  disconnectShop: () => void;
+  refreshShopData: () => Promise<void>;
+  clearError: () => void;
+}
+
+const ShopifyContext = createContext<ShopifyContextType | undefined>(undefined);
+
+export const useShopify = () => {
+  const context = useContext(ShopifyContext);
+  if (context === undefined) {
+    throw new Error("useShopify must be used within a ShopifyProvider");
+  }
+  return context;
+};
+
+interface ShopifyProviderProps {
+  children: ReactNode;
+}
+
+export const ShopifyProvider: React.FC<ShopifyProviderProps> = ({
+  children,
+}) => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [shopData, setShopData] = useState<ShopifyStore | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+
+  useEffect(() => {
+    checkExistingConnection();
+  }, []);
+
+  const clearError = () => {
+    setError(null);
+  };
+
+  const checkExistingConnection = async () => {
+    setIsLoading(true);
+    try {
+      if (shopifyAPI.isAuthenticated()) {
+        const response = await shopifyAPI.getShop();
+        setShopData(response.shop);
+        setIsConnected(true);
+        setIsDemoMode(false);
+        setError(null);
+      } else {
+        // Check if demo mode is enabled
+        const demoMode = import.meta.env.VITE_DEV_MODE === "true";
+        if (demoMode) {
+          setIsDemoMode(true);
+          // You can set mock shop data here for demo purposes
+        }
+      }
+    } catch (err) {
+      console.error("Failed to check existing connection:", err);
+      // Clear invalid credentials
+      shopifyAPI.clearCredentials();
+      setError("Failed to connect to Shopify store");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const connectShop = async (shopDomain: string) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const authUrl = await shopifyAPI.initiateAuth(shopDomain);
+      // Redirect to Shopify OAuth
+      window.location.href = authUrl;
+    } catch (err) {
+      setError("Failed to initiate Shopify connection");
+      setIsLoading(false);
+    }
+  };
+
+  const disconnectShop = () => {
+    shopifyAPI.clearCredentials();
+    setIsConnected(false);
+    setShopData(null);
+    setIsDemoMode(false);
+    setError(null);
+  };
+
+  const refreshShopData = async () => {
+    console.log("RefreshShopData - Checking authentication status...");
+    console.log("shopifyAPI.isAuthenticated():", shopifyAPI.isAuthenticated());
+
+    if (!shopifyAPI.isAuthenticated()) {
+      console.log("Not authenticated, skipping shop data refresh");
+      return;
+    }
+
+    try {
+      console.log("Fetching shop data from Shopify API...");
+      const response = await shopifyAPI.getShop();
+      console.log("Shop data received:", response.shop.name);
+      console.log("Setting isConnected to true and updating shop data...");
+      setShopData(response.shop);
+      setIsConnected(true);
+      setIsDemoMode(false);
+      setError(null);
+      console.log("Context state updated successfully");
+    } catch (err) {
+      console.error("Failed to refresh shop data:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(`Failed to refresh shop data: ${errorMessage}`);
+      // Don't clear credentials here - the connection might still be valid
+    }
+  };
+
+  const value: ShopifyContextType = {
+    isConnected,
+    isLoading,
+    shopData,
+    error,
+    isDemoMode,
+    connectShop,
+    disconnectShop,
+    refreshShopData,
+    clearError,
+  };
+
+  return (
+    <ShopifyContext.Provider value={value}>{children}</ShopifyContext.Provider>
+  );
+};

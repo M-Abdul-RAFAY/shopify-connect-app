@@ -1,140 +1,217 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Search,
   Filter,
+  Download,
   Eye,
-  Truck,
+  MoreHorizontal,
   Package,
+  Truck,
   CheckCircle,
   Clock,
   AlertCircle,
-  MapPin,
-  Phone,
-  Mail,
   Calendar,
-  MoreHorizontal
-} from 'lucide-react';
+  Mail,
+} from "lucide-react";
+import { useShopifyOrders } from "../hooks/useShopifyData";
+import { useShopify } from "../contexts/ShopifyContext";
 
 const Orders = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const orders = [
+  // Use Shopify data if connected, otherwise use placeholder data
+  const { orders: shopifyOrders, loading, error } = useShopifyOrders();
+  const { isConnected, shopData } = useShopify();
+
+  // Placeholder data for when not connected to Shopify
+  const placeholderOrders = [
     {
-      id: '#ORD-2024-001',
+      id: "#ORD-2024-001",
       customer: {
-        name: 'Alice Johnson',
-        email: 'alice.johnson@email.com',
-        phone: '+1 (555) 123-4567'
+        name: "Alice Johnson",
+        email: "alice.johnson@email.com",
+        phone: "+1 (555) 123-4567",
       },
       items: 3,
       amount: 1249.99,
-      status: 'Processing',
-      paymentStatus: 'Paid',
-      shippingAddress: '123 Main St, New York, NY 10001',
-      orderDate: '2024-01-15T10:30:00',
-      estimatedDelivery: '2024-01-20',
-      channel: 'Online Store',
-      fulfillmentCenter: 'Main Warehouse'
+      status: "Processing",
+      paymentStatus: "Paid",
+      shippingAddress: "123 Main St, New York, NY 10001",
+      orderDate: "2024-01-15T10:30:00",
+      estimatedDelivery: "2024-01-20",
+      channel: "Online Store",
+      fulfillmentCenter: "Main Warehouse",
     },
     {
-      id: '#ORD-2024-002',
+      id: "#ORD-2024-002",
       customer: {
-        name: 'Bob Smith',
-        email: 'bob.smith@email.com',
-        phone: '+1 (555) 987-6543'
+        name: "Bob Smith",
+        email: "bob.smith@email.com",
+        phone: "+1 (555) 987-6543",
       },
       items: 1,
-      amount: 89.50,
-      status: 'Shipped',
-      paymentStatus: 'Paid',
-      shippingAddress: '456 Oak Ave, Los Angeles, CA 90210',
-      orderDate: '2024-01-14T15:45:00',
-      estimatedDelivery: '2024-01-18',
-      channel: 'Mobile App',
-      fulfillmentCenter: 'West Coast Hub'
+      amount: 89.5,
+      status: "Shipped",
+      paymentStatus: "Paid",
+      shippingAddress: "456 Oak Ave, Los Angeles, CA 90210",
+      orderDate: "2024-01-14T15:45:00",
+      estimatedDelivery: "2024-01-18",
+      channel: "Mobile App",
+      fulfillmentCenter: "West Coast Hub",
     },
     {
-      id: '#ORD-2024-003',
+      id: "#ORD-2024-003",
       customer: {
-        name: 'Carol Davis',
-        email: 'carol.davis@email.com',
-        phone: '+1 (555) 456-7890'
+        name: "Carol Davis",
+        email: "carol.davis@email.com",
+        phone: "+1 (555) 456-7890",
       },
       items: 2,
       amount: 234.75,
-      status: 'Delivered',
-      paymentStatus: 'Paid',
-      shippingAddress: '789 Pine St, Chicago, IL 60601',
-      orderDate: '2024-01-12T09:15:00',
-      estimatedDelivery: '2024-01-16',
-      channel: 'In-Store',
-      fulfillmentCenter: 'Chicago Store'
+      status: "Delivered",
+      paymentStatus: "Paid",
+      shippingAddress: "789 Pine St, Chicago, IL 60601",
+      orderDate: "2024-01-12T09:15:00",
+      estimatedDelivery: "2024-01-16",
+      channel: "In-Store",
+      fulfillmentCenter: "Chicago Store",
     },
     {
-      id: '#ORD-2024-004',
+      id: "#ORD-2024-004",
       customer: {
-        name: 'David Wilson',
-        email: 'david.wilson@email.com',
-        phone: '+1 (555) 321-0987'
+        name: "David Wilson",
+        email: "david.wilson@email.com",
+        phone: "+1 (555) 321-0987",
       },
       items: 4,
       amount: 567.25,
-      status: 'Pending',
-      paymentStatus: 'Pending',
-      shippingAddress: '321 Elm Dr, Miami, FL 33101',
-      orderDate: '2024-01-15T14:20:00',
-      estimatedDelivery: '2024-01-22',
-      channel: 'Marketplace',
-      fulfillmentCenter: 'Southeast Hub'
+      status: "Pending",
+      paymentStatus: "Pending",
+      shippingAddress: "321 Elm Dr, Miami, FL 33101",
+      orderDate: "2024-01-15T14:20:00",
+      estimatedDelivery: "2024-01-22",
+      channel: "Marketplace",
+      fulfillmentCenter: "Southeast Hub",
     },
     {
-      id: '#ORD-2024-005',
+      id: "#ORD-2024-005",
       customer: {
-        name: 'Eva Brown',
-        email: 'eva.brown@email.com',
-        phone: '+1 (555) 654-3210'
+        name: "Eva Brown",
+        email: "eva.brown@email.com",
+        phone: "+1 (555) 654-3210",
       },
       items: 1,
       amount: 1899.99,
-      status: 'Cancelled',
-      paymentStatus: 'Refunded',
-      shippingAddress: '654 Maple Ln, Seattle, WA 98101',
-      orderDate: '2024-01-13T11:30:00',
+      status: "Cancelled",
+      paymentStatus: "Refunded",
+      shippingAddress: "654 Maple Ln, Seattle, WA 98101",
+      orderDate: "2024-01-13T11:30:00",
       estimatedDelivery: null,
-      channel: 'Online Store',
-      fulfillmentCenter: 'Northwest Hub'
-    }
+      channel: "Online Store",
+      fulfillmentCenter: "Northwest Hub",
+    },
   ];
+
+  // Use real Shopify data when connected, otherwise use placeholder data
+  const orders =
+    isConnected && shopifyOrders.length > 0
+      ? shopifyOrders.map((order) => ({
+          id: order.name,
+          customer: {
+            name: order.customer
+              ? `${order.customer.first_name} ${order.customer.last_name}`
+              : "Guest",
+            email: order.customer?.email || order.email,
+            phone: order.customer?.phone || "",
+          },
+          items: order.line_items.length,
+          amount: parseFloat(order.total_price),
+          status: order.fulfillment_status || "Pending",
+          paymentStatus: order.financial_status === "paid" ? "Paid" : "Pending",
+          shippingAddress: order.shipping_address
+            ? `${order.shipping_address.address1}, ${
+                order.shipping_address.city
+              }, ${
+                order.shipping_address.province ||
+                order.shipping_address.country
+              }`
+            : "No address",
+          orderDate: order.created_at,
+          estimatedDelivery: null,
+          channel: "Online Store",
+          fulfillmentCenter: "Main Store",
+        }))
+      : placeholderOrders;
+
+  // Show loading state when connected and fetching data
+  if (isConnected && loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
+          <p className="text-gray-600 mt-1">
+            Loading orders from {shopData?.name}...
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse"
+            >
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state when connected but failed to load
+  if (isConnected && error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Processing':
-        return 'bg-blue-100 text-blue-800';
-      case 'Shipped':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Delivered':
-        return 'bg-green-100 text-green-800';
-      case 'Pending':
-        return 'bg-gray-100 text-gray-800';
-      case 'Cancelled':
-        return 'bg-red-100 text-red-800';
+      case "Processing":
+        return "bg-blue-100 text-blue-800";
+      case "Shipped":
+        return "bg-yellow-100 text-yellow-800";
+      case "Delivered":
+        return "bg-green-100 text-green-800";
+      case "Pending":
+        return "bg-gray-100 text-gray-800";
+      case "Cancelled":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Processing':
+      case "Processing":
         return <Clock className="w-4 h-4" />;
-      case 'Shipped':
+      case "Shipped":
         return <Truck className="w-4 h-4" />;
-      case 'Delivered':
+      case "Delivered":
         return <CheckCircle className="w-4 h-4" />;
-      case 'Pending':
+      case "Pending":
         return <AlertCircle className="w-4 h-4" />;
-      case 'Cancelled':
+      case "Cancelled":
         return <AlertCircle className="w-4 h-4" />;
       default:
         return <Package className="w-4 h-4" />;
@@ -143,32 +220,33 @@ const Orders = () => {
 
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
-      case 'Paid':
-        return 'bg-green-100 text-green-800';
-      case 'Pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Refunded':
-        return 'bg-red-100 text-red-800';
+      case "Paid":
+        return "bg-green-100 text-green-800";
+      case "Pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "Refunded":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
-  const filteredOrders = orders.filter(order =>
-    order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customer.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredOrders = orders.filter(
+    (order) =>
+      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -177,7 +255,17 @@ const Orders = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
-          <p className="text-gray-600 mt-1">Track and manage all customer orders</p>
+          <p className="text-gray-600 mt-1">
+            {isConnected
+              ? `Manage orders from ${shopData?.name} • ${orders.length} total orders`
+              : "Track and manage all customer orders"}
+          </p>
+        </div>
+        <div className="mt-4 sm:mt-0 flex space-x-3">
+          <button className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium">
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </button>
         </div>
       </div>
 
@@ -194,7 +282,7 @@ const Orders = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-yellow-100">
@@ -206,7 +294,7 @@ const Orders = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-green-100">
@@ -218,7 +306,7 @@ const Orders = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-purple-100">
@@ -247,7 +335,7 @@ const Orders = () => {
               />
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setFilterOpen(!filterOpen)}
@@ -258,7 +346,7 @@ const Orders = () => {
             </button>
           </div>
         </div>
-        
+
         {filterOpen && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -296,14 +384,30 @@ const Orders = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Channel</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Order
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Payment
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Channel
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -311,13 +415,19 @@ const Orders = () => {
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-blue-600">{order.id}</div>
-                      <div className="text-sm text-gray-500">{order.items} items</div>
+                      <div className="text-sm font-medium text-blue-600">
+                        {order.id}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {order.items} items
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{order.customer.name}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {order.customer.name}
+                      </div>
                       <div className="text-sm text-gray-500 flex items-center">
                         <Mail className="w-3 h-3 mr-1" />
                         {order.customer.email}
@@ -325,18 +435,28 @@ const Orders = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">${order.amount.toFixed(2)}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      ${order.amount.toFixed(2)}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                          order.status
+                        )}`}
+                      >
                         {getStatusIcon(order.status)}
                         <span className="ml-1">{order.status}</span>
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPaymentStatusColor(order.paymentStatus)}`}>
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPaymentStatusColor(
+                        order.paymentStatus
+                      )}`}
+                    >
                       {order.paymentStatus}
                     </span>
                   </td>
@@ -364,11 +484,12 @@ const Orders = () => {
             </tbody>
           </table>
         </div>
-        
+
         {/* Pagination */}
         <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
           <div className="text-sm text-gray-700">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of{' '}
+            Showing <span className="font-medium">1</span> to{" "}
+            <span className="font-medium">5</span> of{" "}
             <span className="font-medium">1,247</span> results
           </div>
           <div className="flex space-x-2">

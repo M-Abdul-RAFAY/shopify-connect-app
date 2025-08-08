@@ -1,15 +1,15 @@
-import React from 'react';
-import { 
-  DollarSign, 
-  ShoppingCart, 
-  Users, 
-  Package, 
-  TrendingUp, 
-  TrendingDown, 
+import React from "react";
+import {
+  DollarSign,
+  ShoppingCart,
+  Users,
+  Package,
+  TrendingUp,
+  TrendingDown,
   AlertTriangle,
-  Star
-} from 'lucide-react';
-import { useShopifyData } from '../hooks/useShopifyData';
+  Star,
+} from "lucide-react";
+import { useShopifyData } from "../hooks/useShopifyData";
 
 const Dashboard = () => {
   const { data, loading, error } = useShopifyData();
@@ -23,7 +23,10 @@ const Dashboard = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse">
+            <div
+              key={i}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse"
+            >
               <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
               <div className="h-8 bg-gray-200 rounded w-1/2"></div>
             </div>
@@ -50,82 +53,86 @@ const Dashboard = () => {
 
   const stats = [
     {
-      name: 'Total Revenue',
-      value: `$${analytics?.totalRevenue?.toLocaleString() || '0'}`,
-      change: '+12.5%',
-      trend: 'up',
+      name: "Total Revenue",
+      value: `$${analytics?.totalRevenue?.toLocaleString() || "0"}`,
+      change: "+12.5%",
+      trend: "up",
       icon: DollarSign,
-      color: 'text-green-600'
+      color: "text-green-600",
     },
     {
-      name: 'Total Orders',
-      value: analytics?.totalOrders?.toLocaleString() || '0',
-      change: '+8.2%',
-      trend: 'up',
+      name: "Total Orders",
+      value: analytics?.totalOrders?.toLocaleString() || "0",
+      change: "+8.2%",
+      trend: "up",
       icon: ShoppingCart,
-      color: 'text-blue-600'
+      color: "text-blue-600",
     },
     {
-      name: 'Average Order Value',
-      value: `$${analytics?.averageOrderValue?.toFixed(2) || '0.00'}`,
-      change: '+5.1%',
-      trend: 'up',
+      name: "Average Order Value",
+      value: `$${analytics?.averageOrderValue?.toFixed(2) || "0.00"}`,
+      change: "+5.1%",
+      trend: "up",
       icon: Users,
-      color: 'text-purple-600'
+      color: "text-purple-600",
     },
     {
-      name: 'Total Products',
-      value: analytics?.totalProducts?.toLocaleString() || '0',
-      change: products.length > 0 ? '+2.3%' : '0%',
-      trend: products.length > 0 ? 'up' : 'down',
+      name: "Total Products",
+      value: analytics?.totalProducts?.toLocaleString() || "0",
+      change: products.length > 0 ? "+2.3%" : "0%",
+      trend: products.length > 0 ? "up" : "down",
       icon: Package,
-      color: 'text-orange-600'
-    }
+      color: "text-orange-600",
+    },
   ];
 
   const recentOrders = analytics?.recentOrders?.slice(0, 5) || [];
 
   const lowStockItems = products
-    .filter(product => {
-      return product.variants.some(variant => variant.inventory_quantity < 10);
+    .filter((product) => {
+      return product.variants.some(
+        (variant) => variant.inventory_quantity < 10
+      );
     })
     .slice(0, 4)
-    .map(product => {
-      const variant = product.variants.find(v => v.inventory_quantity < 10) || product.variants[0];
+    .map((product) => {
+      const variant =
+        product.variants.find((v) => v.inventory_quantity < 10) ||
+        product.variants[0];
       return {
         name: product.title,
         current: variant.inventory_quantity,
         minimum: 10,
-        location: 'Store'
+        location: "Store",
       };
     });
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'fulfilled':
-        return 'bg-green-100 text-green-800';
-      case 'partial':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'pending':
-      case 'unfulfilled':
-        return 'bg-gray-100 text-gray-800';
+      case "fulfilled":
+        return "bg-green-100 text-green-800";
+      case "partial":
+        return "bg-yellow-100 text-yellow-800";
+      case "pending":
+      case "unfulfilled":
+        return "bg-gray-100 text-gray-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const formatCurrency = (amount: string | number) => {
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    const num = typeof amount === "string" ? parseFloat(amount) : amount;
     return `$${num.toFixed(2)}`;
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -134,21 +141,30 @@ const Dashboard = () => {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Welcome back! Here's what's happening with your store today.</p>
+        <p className="text-gray-600 mt-1">
+          Welcome back! Here's what's happening with your store today.
+        </p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
-          const TrendIcon = stat.trend === 'up' ? TrendingUp : TrendingDown;
+          const TrendIcon = stat.trend === "up" ? TrendingUp : TrendingDown;
           return (
-            <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div
+              key={index}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+            >
               <div className="flex items-center justify-between">
                 <div className={`p-3 rounded-lg bg-gray-100`}>
                   <Icon className={`w-6 h-6 ${stat.color}`} />
                 </div>
-                <div className={`flex items-center ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                <div
+                  className={`flex items-center ${
+                    stat.trend === "up" ? "text-green-600" : "text-red-600"
+                  }`}
+                >
                   <TrendIcon className="w-4 h-4 mr-1" />
                   <span className="text-sm font-medium">{stat.change}</span>
                 </div>
@@ -168,19 +184,33 @@ const Dashboard = () => {
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">View All</button>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Recent Orders
+              </h2>
+              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                View All
+              </button>
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Order
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Customer
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Time
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -190,14 +220,19 @@ const Dashboard = () => {
                       #{order.order_number || order.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.customer?.first_name} {order.customer?.last_name} || 'Guest'
+                      {order.customer?.first_name} {order.customer?.last_name}{" "}
+                      || 'Guest'
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(order.total_price)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.fulfillment_status || 'pending')}`}>
-                        {order.fulfillment_status || 'Pending'}
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                          order.fulfillment_status || "pending"
+                        )}`}
+                      >
+                        {order.fulfillment_status || "Pending"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -207,7 +242,10 @@ const Dashboard = () => {
                 ))}
                 {recentOrders.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                    <td
+                      colSpan={5}
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
                       No recent orders found
                     </td>
                   </tr>
@@ -222,25 +260,36 @@ const Dashboard = () => {
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center space-x-2">
               <AlertTriangle className="w-5 h-5 text-orange-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Low Stock Alert</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Low Stock Alert
+              </h2>
             </div>
           </div>
           <div className="p-6 space-y-4">
             {lowStockItems.map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 bg-orange-50 rounded-lg"
+              >
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {item.name}
+                  </p>
                   <p className="text-xs text-gray-500">{item.location}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-orange-600">{item.current}</p>
+                  <p className="text-sm font-bold text-orange-600">
+                    {item.current}
+                  </p>
                   <p className="text-xs text-gray-500">Min: {item.minimum}</p>
                 </div>
               </div>
             ))}
             {lowStockItems.length === 0 && (
               <div className="text-center py-4">
-                <p className="text-gray-500 text-sm">All products are well stocked!</p>
+                <p className="text-gray-500 text-sm">
+                  All products are well stocked!
+                </p>
               </div>
             )}
             {lowStockItems.length > 0 && (
@@ -256,7 +305,9 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Store Performance</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Store Performance
+            </h3>
             <Star className="w-5 h-5 text-yellow-500" />
           </div>
           <div className="mt-4">
@@ -265,7 +316,10 @@ const Dashboard = () => {
             <div className="mt-2 flex items-center">
               <div className="flex space-x-1">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-current text-yellow-400" />
+                  <Star
+                    key={i}
+                    className="w-4 h-4 fill-current text-yellow-400"
+                  />
                 ))}
               </div>
             </div>
@@ -274,31 +328,44 @@ const Dashboard = () => {
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Fulfillment Rate</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Fulfillment Rate
+            </h3>
             <Package className="w-5 h-5 text-green-500" />
           </div>
           <div className="mt-4">
             <div className="text-3xl font-bold text-gray-900">
-              {orders.length > 0 
-                ? Math.round((orders.filter(o => o.fulfillment_status === 'fulfilled').length / orders.length) * 100)
-                : 0
-              }%
+              {orders.length > 0
+                ? Math.round(
+                    (orders.filter((o) => o.fulfillment_status === "fulfilled")
+                      .length /
+                      orders.length) *
+                      100
+                  )
+                : 0}
+              %
             </div>
             <p className="text-gray-600">Orders Fulfilled</p>
             <div className="mt-2 flex items-center">
               <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-              <span className="text-sm text-green-600">+2.3% from last week</span>
+              <span className="text-sm text-green-600">
+                +2.3% from last week
+              </span>
             </div>
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Product Catalog</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Product Catalog
+            </h3>
             <Users className="w-5 h-5 text-blue-500" />
           </div>
           <div className="mt-4">
-            <div className="text-3xl font-bold text-gray-900">{products.length}</div>
+            <div className="text-3xl font-bold text-gray-900">
+              {products.length}
+            </div>
             <p className="text-gray-600">Active Products</p>
             <div className="mt-2 flex items-center">
               <TrendingUp className="w-4 h-4 text-blue-500 mr-1" />
