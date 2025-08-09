@@ -92,6 +92,71 @@ app.post("/api/shopify/exchange-token", async (req, res) => {
   }
 });
 
+// Shopify GraphQL API proxy endpoint
+app.post("/api/shopify/graphql", async (req, res) => {
+  try {
+    const accessToken =
+      req.headers["x-shopify-access-token"] ||
+      req.headers["X-Shopify-Access-Token"];
+    const shopDomain =
+      req.headers["x-shop-domain"] || req.headers["X-Shop-Domain"];
+
+    console.log("GraphQL request headers:", {
+      "x-shopify-access-token": accessToken
+        ? `${accessToken.substring(0, 10)}...`
+        : "missing",
+      "x-shop-domain": shopDomain || "missing",
+    });
+
+    if (!accessToken || !shopDomain) {
+      console.log("Missing required headers for GraphQL");
+      return res.status(401).json({
+        error:
+          "Missing required headers: X-Shopify-Access-Token and X-Shop-Domain",
+      });
+    }
+
+    // Ensure we're using the full .myshopify.com domain
+    let fullShopDomain = shopDomain;
+    if (!shopDomain.includes(".myshopify.com")) {
+      fullShopDomain = `${shopDomain}.myshopify.com`;
+    }
+
+    const graphqlUrl = `https://${fullShopDomain}/admin/api/2024-07/graphql.json`;
+
+    console.log(`Making GraphQL request to: ${graphqlUrl}`);
+
+    const response = await axios({
+      method: "POST",
+      url: graphqlUrl,
+      headers: {
+        "X-Shopify-Access-Token": accessToken,
+        "Content-Type": "application/json",
+        "User-Agent": "Shopify-Connect-App/1.0",
+        Accept: "application/json",
+      },
+      data: req.body,
+      timeout: 15000,
+    });
+
+    console.log("GraphQL API response success:", response.status);
+    res.json(response.data);
+  } catch (error) {
+    console.error("GraphQL API error:", error.message);
+    console.error("Error details:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      url: error.config?.url,
+    });
+
+    res.status(error.response?.status || 500).json({
+      error: "GraphQL API request failed",
+      details: error.response?.data || error.message,
+    });
+  }
+});
+
 // Shopify API proxy endpoint
 app.all("/api/shopify/proxy/*", async (req, res) => {
   try {
@@ -130,14 +195,14 @@ app.all("/api/shopify/proxy/*", async (req, res) => {
     const shopifyUrl = `https://${fullShopDomain}/admin/api/2024-07${shopifyEndpoint}`;
 
     console.log(`Proxying ${req.method} request to: ${shopifyUrl}`);
-    
+
     // Prepare headers - don't send Content-Type for GET requests
     const headers = {
       "X-Shopify-Access-Token": accessToken,
       "User-Agent": "Shopify-Connect-App/1.0",
       Accept: "application/json",
     };
-    
+
     // Only add Content-Type for requests with body data
     if (req.method !== "GET" && req.body && Object.keys(req.body).length > 0) {
       headers["Content-Type"] = "application/json";
