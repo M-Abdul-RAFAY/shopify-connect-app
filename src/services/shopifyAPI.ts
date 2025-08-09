@@ -298,7 +298,7 @@ class ShopifyAPI {
       "read_products,read_orders,read_customers,read_shop";
     const redirectUri =
       import.meta.env.VITE_SHOPIFY_REDIRECT_URI ||
-      "https://0124c68cd808.ngrok-free.app/auth/callback";
+      "https://daaf522de396.ngrok-free.app/auth/callback";
     const state = Math.random().toString(36).substring(7);
 
     Cookies.set("shopify_oauth_state", state, { expires: 1 });
@@ -328,7 +328,7 @@ class ShopifyAPI {
       "read_products,read_orders,read_customers,read_shop";
     const redirectUri =
       import.meta.env.VITE_SHOPIFY_REDIRECT_URI ||
-      "https://0124c68cd808.ngrok-free.app/auth/callback";
+      "https://daaf522de396.ngrok-free.app/auth/callback";
     const state = Math.random().toString(36).substring(7);
 
     Cookies.set("shopify_oauth_state", state, { expires: 1 });
@@ -371,7 +371,7 @@ class ShopifyAPI {
     // Use backend proxy instead of direct Shopify API call
     const backendUrl =
       import.meta.env.VITE_API_BASE_URL ||
-      "https://0124c68cd808.ngrok-free.app/api";
+      "https://daaf522de396.ngrok-free.app/api";
     const tokenUrl = `${backendUrl}/shopify/exchange-token`;
 
     console.log("Token exchange URL (via backend):", tokenUrl);
