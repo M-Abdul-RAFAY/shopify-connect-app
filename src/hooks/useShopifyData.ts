@@ -36,6 +36,8 @@ export const useShopifyData = () => {
     setError(null);
 
     try {
+      console.log("Starting to fetch all Shopify data...");
+
       const [productsRes, ordersRes, customersRes, analyticsRes] =
         await Promise.all([
           shopifyAPI.getProducts(50),
@@ -44,6 +46,13 @@ export const useShopifyData = () => {
           shopifyAPI.getAnalytics(),
         ]);
 
+      console.log("All Shopify data fetched successfully:", {
+        products: productsRes.products?.length || 0,
+        orders: ordersRes.orders?.length || 0,
+        customers: customersRes.customers?.length || 0,
+        analytics: analyticsRes ? "available" : "unavailable",
+      });
+
       setData({
         products: productsRes.products,
         orders: ordersRes.orders,
@@ -51,6 +60,7 @@ export const useShopifyData = () => {
         analytics: analyticsRes,
       });
     } catch (err) {
+      console.error("Detailed error in useShopifyData:", err);
       setError("Failed to fetch Shopify data");
       console.error("Failed to fetch Shopify data:", err);
     } finally {

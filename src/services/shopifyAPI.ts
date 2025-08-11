@@ -695,8 +695,6 @@ class ShopifyAPI {
                   currencyCode
                 }
               }
-              financialStatus
-              fulfillmentStatus
               note
               tags
               customer {
@@ -753,8 +751,8 @@ class ShopifyAPI {
           total_price: order.totalPriceSet?.shopMoney?.amount || "0",
           subtotal_price: order.subtotalPriceSet?.shopMoney?.amount || "0",
           total_tax: order.totalTaxSet?.shopMoney?.amount || "0",
-          financial_status: order.financialStatus,
-          fulfillment_status: order.fulfillmentStatus,
+          financial_status: "unknown", // Will be populated from REST API fallback
+          fulfillment_status: "unknown", // Will be populated from REST API fallback
           note: order.note || "",
           tags: order.tags || "",
           currency: order.totalPriceSet?.shopMoney?.currencyCode || "USD",
@@ -827,12 +825,9 @@ class ShopifyAPI {
               email
               createdAt
               updatedAt
-              ordersCount
-              totalSpent
               phone
               tags
               note
-              acceptsMarketing
               verifiedEmail
               state
               addresses {
@@ -886,12 +881,12 @@ class ShopifyAPI {
           email: customer.email || "",
           created_at: customer.createdAt,
           updated_at: customer.updatedAt,
-          orders_count: customer.ordersCount || 0,
-          total_spent: customer.totalSpent || "0",
+          orders_count: 0, // Will be populated from REST API fallback
+          total_spent: "0", // Will be populated from REST API fallback
           phone: customer.phone || "",
           tags: customer.tags || "",
           note: customer.note || "",
-          accepts_marketing: customer.acceptsMarketing || false,
+          accepts_marketing: false, // Will be populated from REST API fallback
           verified_email: customer.verifiedEmail || false,
           state: customer.state || "enabled",
           addresses:
@@ -1011,6 +1006,9 @@ class ShopifyAPI {
 
     orders.forEach((order) => {
       order.line_items.forEach((item) => {
+        // Skip items without a product_id (could be custom items or null)
+        if (!item.product_id) return;
+        
         const key = item.product_id.toString();
         if (!productSales[key]) {
           productSales[key] = {
