@@ -152,12 +152,7 @@ const CustomersShopify = () => {
             customers
           </p>
         </div>
-        <div className="mt-4 sm:mt-0 flex space-x-3">
-          <button className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </button>
-        </div>
+        <div className="mt-4 sm:mt-0 flex space-x-3"></div>
       </div>
 
       {/* Stats Cards */}
@@ -334,15 +329,6 @@ const CustomersShopify = () => {
                         </p>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="mt-4 flex items-center space-x-2">
-                    <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                      View Profile
-                    </button>
-                    <button className="p-2 text-gray-400 hover:text-gray-600">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
               </div>
