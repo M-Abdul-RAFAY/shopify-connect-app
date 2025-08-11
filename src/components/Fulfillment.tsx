@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Search,
   Filter,
@@ -9,153 +9,212 @@ import {
   CheckCircle,
   AlertTriangle,
   Navigation,
-  Phone,
   Calendar,
   Eye,
-  MoreHorizontal
-} from 'lucide-react';
+  MoreHorizontal,
+} from "lucide-react";
+import { useShopifyFulfillment } from "../hooks/useShopifyData";
+import { useShopify } from "../contexts/ShopifyContext";
 
 const Fulfillment = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const shipments = [
+  // Use Shopify data if connected, otherwise use placeholder data
+  const { fulfillmentData, loading, error } = useShopifyFulfillment();
+  const { isConnected, shopData } = useShopify();
+
+  // Placeholder data for when not connected to Shopify
+  const placeholderShipments = [
     {
-      id: 'SHP-2024-001',
-      orderId: '#ORD-2024-001',
-      customer: 'Alice Johnson',
-      origin: 'Main Warehouse',
-      destination: '123 Main St, New York, NY 10001',
-      carrier: 'FedEx',
-      trackingNumber: '1Z999AA1012345675',
-      status: 'In Transit',
-      estimatedDelivery: '2024-01-20',
+      id: "SHP-2024-001",
+      orderId: "#ORD-2024-001",
+      customer: "Alice Johnson",
+      origin: "Main Warehouse",
+      destination: "123 Main St, New York, NY 10001",
+      carrier: "FedEx",
+      trackingNumber: "1Z999AA1012345675",
+      status: "In Transit",
+      estimatedDelivery: "2024-01-20",
       actualDelivery: null,
       items: 3,
-      weight: '2.5 lbs',
-      cost: 12.99
+      weight: "2.5 lbs",
+      cost: 12.99,
     },
     {
-      id: 'SHP-2024-002',
-      orderId: '#ORD-2024-002',
-      customer: 'Bob Smith',
-      origin: 'West Coast Hub',
-      destination: '456 Oak Ave, Los Angeles, CA 90210',
-      carrier: 'UPS',
-      trackingNumber: '1Z999AA1087654321',
-      status: 'Delivered',
-      estimatedDelivery: '2024-01-18',
-      actualDelivery: '2024-01-17',
+      id: "SHP-2024-002",
+      orderId: "#ORD-2024-002",
+      customer: "Bob Smith",
+      origin: "West Coast Hub",
+      destination: "456 Oak Ave, Los Angeles, CA 90210",
+      carrier: "UPS",
+      trackingNumber: "1Z999AA1087654321",
+      status: "Delivered",
+      estimatedDelivery: "2024-01-18",
+      actualDelivery: "2024-01-17",
       items: 1,
-      weight: '1.2 lbs',
-      cost: 8.99
+      weight: "1.2 lbs",
+      cost: 8.99,
     },
     {
-      id: 'SHP-2024-003',
-      orderId: '#ORD-2024-003',
-      customer: 'Carol Davis',
-      origin: 'Chicago Store',
-      destination: '789 Pine St, Chicago, IL 60601',
-      carrier: 'DHL',
-      trackingNumber: '4321567890123456',
-      status: 'Processing',
-      estimatedDelivery: '2024-01-21',
+      id: "SHP-2024-003",
+      orderId: "#ORD-2024-003",
+      customer: "Carol Davis",
+      origin: "Chicago Store",
+      destination: "789 Pine St, Chicago, IL 60601",
+      carrier: "DHL",
+      trackingNumber: "4321567890123456",
+      status: "Processing",
+      estimatedDelivery: "2024-01-21",
       actualDelivery: null,
       items: 2,
-      weight: '3.1 lbs',
-      cost: 15.50
+      weight: "3.1 lbs",
+      cost: 15.5,
     },
     {
-      id: 'SHP-2024-004',
-      orderId: '#ORD-2024-004',
-      customer: 'David Wilson',
-      origin: 'Southeast Hub',
-      destination: '321 Elm Dr, Miami, FL 33101',
-      carrier: 'USPS',
-      trackingNumber: '9405511899562389474747',
-      status: 'Exception',
-      estimatedDelivery: '2024-01-22',
+      id: "SHP-2024-004",
+      orderId: "#ORD-2024-004",
+      customer: "David Wilson",
+      origin: "Southeast Hub",
+      destination: "321 Elm Dr, Miami, FL 33101",
+      carrier: "USPS",
+      trackingNumber: "9405511899562389474747",
+      status: "Exception",
+      estimatedDelivery: "2024-01-22",
       actualDelivery: null,
       items: 4,
-      weight: '5.8 lbs',
-      cost: 22.75
+      weight: "5.8 lbs",
+      cost: 22.75,
     },
     {
-      id: 'SHP-2024-005',
-      orderId: '#ORD-2024-005',
-      customer: 'Eva Brown',
-      origin: 'Northwest Hub',
-      destination: '654 Maple Ln, Seattle, WA 98101',
-      carrier: 'FedEx',
-      trackingNumber: '1Z999AA1098765432',
-      status: 'Ready to Ship',
-      estimatedDelivery: '2024-01-24',
+      id: "SHP-2024-005",
+      orderId: "#ORD-2024-005",
+      customer: "Eva Brown",
+      origin: "Northwest Hub",
+      destination: "654 Maple Ln, Seattle, WA 98101",
+      carrier: "FedEx",
+      trackingNumber: "1Z999AA1098765432",
+      status: "Ready to Ship",
+      estimatedDelivery: "2024-01-24",
       actualDelivery: null,
       items: 1,
-      weight: '4.2 lbs',
-      cost: 18.99
-    }
+      weight: "4.2 lbs",
+      cost: 18.99,
+    },
   ];
 
-  const fulfillmentCenters = [
+  const placeholderFulfillmentCenters = [
     {
-      name: 'Main Warehouse',
-      location: 'New York, NY',
+      name: "Main Warehouse",
+      location: "New York, NY",
       activeOrders: 45,
-      capacity: '85%',
-      status: 'Operational'
+      capacity: "85%",
+      status: "Operational",
     },
     {
-      name: 'West Coast Hub',
-      location: 'Los Angeles, CA',
+      name: "West Coast Hub",
+      location: "Los Angeles, CA",
       activeOrders: 32,
-      capacity: '72%',
-      status: 'Operational'
+      capacity: "72%",
+      status: "Operational",
     },
     {
-      name: 'Chicago Store',
-      location: 'Chicago, IL',
+      name: "Chicago Store",
+      location: "Chicago, IL",
       activeOrders: 18,
-      capacity: '45%',
-      status: 'Operational'
+      capacity: "45%",
+      status: "Operational",
     },
     {
-      name: 'Southeast Hub',
-      location: 'Miami, FL',
+      name: "Southeast Hub",
+      location: "Miami, FL",
       activeOrders: 28,
-      capacity: '68%',
-      status: 'Maintenance'
-    }
+      capacity: "68%",
+      status: "Maintenance",
+    },
   ];
+
+  // Use real Shopify data when connected, otherwise use placeholder data
+  const shipments =
+    isConnected && fulfillmentData?.shipments
+      ? fulfillmentData.shipments
+      : placeholderShipments;
+  const fulfillmentCenters =
+    isConnected && fulfillmentData?.fulfillmentCenters
+      ? fulfillmentData.fulfillmentCenters
+      : placeholderFulfillmentCenters;
+
+  // Show loading state when connected and fetching data
+  if (isConnected && loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Logistics & Fulfillment
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Loading fulfillment data from {shopData?.name}...
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse"
+            >
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state when connected but failed to load
+  if (isConnected && error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Logistics & Fulfillment
+          </h1>
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Processing':
-        return 'bg-blue-100 text-blue-800';
-      case 'Ready to Ship':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'In Transit':
-        return 'bg-purple-100 text-purple-800';
-      case 'Delivered':
-        return 'bg-green-100 text-green-800';
-      case 'Exception':
-        return 'bg-red-100 text-red-800';
+      case "Processing":
+        return "bg-blue-100 text-blue-800";
+      case "Ready to Ship":
+        return "bg-yellow-100 text-yellow-800";
+      case "In Transit":
+        return "bg-purple-100 text-purple-800";
+      case "Delivered":
+        return "bg-green-100 text-green-800";
+      case "Exception":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Processing':
+      case "Processing":
         return <Clock className="w-4 h-4" />;
-      case 'Ready to Ship':
+      case "Ready to Ship":
         return <Package className="w-4 h-4" />;
-      case 'In Transit':
+      case "In Transit":
         return <Truck className="w-4 h-4" />;
-      case 'Delivered':
+      case "Delivered":
         return <CheckCircle className="w-4 h-4" />;
-      case 'Exception':
+      case "Exception":
         return <AlertTriangle className="w-4 h-4" />;
       default:
         return <Package className="w-4 h-4" />;
@@ -163,20 +222,21 @@ const Fulfillment = () => {
   };
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
-  const filteredShipments = shipments.filter(shipment =>
-    shipment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shipment.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shipment.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shipment.trackingNumber.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredShipments = shipments.filter(
+    (shipment: any) =>
+      shipment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shipment.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shipment.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shipment.trackingNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -184,8 +244,14 @@ const Fulfillment = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Logistics & Fulfillment</h1>
-          <p className="text-gray-600 mt-1">Manage shipments and fulfillment centers</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Logistics & Fulfillment
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {isConnected
+              ? `Manage shipments from ${shopData?.name} • ${shipments.length} total shipments`
+              : "Manage shipments and fulfillment centers"}
+          </p>
         </div>
       </div>
 
@@ -197,43 +263,55 @@ const Fulfillment = () => {
               <Package className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">123</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {isConnected && fulfillmentData
+                  ? fulfillmentData.totalShipments
+                  : shipments.length}
+              </h3>
               <p className="text-gray-600 text-sm">Active Shipments</p>
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-purple-100">
               <Truck className="w-6 h-6 text-purple-600" />
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">67</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {shipments.filter((s: any) => s.status === "In Transit").length}
+              </h3>
               <p className="text-gray-600 text-sm">In Transit</p>
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-green-100">
               <CheckCircle className="w-6 h-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">98.5%</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {isConnected && fulfillmentData
+                  ? fulfillmentData.onTimeDeliveryRate
+                  : "98.5%"}
+              </h3>
               <p className="text-gray-600 text-sm">On-Time Delivery</p>
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-orange-100">
               <AlertTriangle className="w-6 h-6 text-orange-600" />
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">3</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {shipments.filter((s: any) => s.status === "Exception").length}
+              </h3>
               <p className="text-gray-600 text-sm">Exceptions</p>
             </div>
           </div>
@@ -242,13 +320,21 @@ const Fulfillment = () => {
 
       {/* Fulfillment Centers */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Fulfillment Centers</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Fulfillment Centers
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {fulfillmentCenters.map((center, index) => (
+          {fulfillmentCenters.map((center: any, index: number) => (
             <div key={index} className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-medium text-gray-900">{center.name}</h3>
-                <span className={`px-2 py-1 text-xs rounded-full ${center.status === 'Operational' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                <span
+                  className={`px-2 py-1 text-xs rounded-full ${
+                    center.status === "Operational"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
                   {center.status}
                 </span>
               </div>
@@ -257,8 +343,21 @@ const Fulfillment = () => {
                   <MapPin className="w-4 h-4 mr-1" />
                   {center.location}
                 </div>
-                <div>Active Orders: <span className="font-medium">{center.activeOrders}</span></div>
-                <div>Capacity: <span className="font-medium">{center.capacity}</span></div>
+                <div>
+                  Active Orders:{" "}
+                  <span className="font-medium">
+                    {center.activeOrders || center.ordersProcessed}
+                  </span>
+                </div>
+                <div>
+                  Capacity:{" "}
+                  <span className="font-medium">
+                    {center.capacity ||
+                      `${Math.floor(
+                        (center.currentLoad / center.capacity) * 100
+                      )}%`}
+                  </span>
+                </div>
               </div>
             </div>
           ))}
@@ -280,7 +379,7 @@ const Fulfillment = () => {
               />
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setFilterOpen(!filterOpen)}
@@ -291,7 +390,7 @@ const Fulfillment = () => {
             </button>
           </div>
         </div>
-        
+
         {filterOpen && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -331,30 +430,58 @@ const Fulfillment = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shipment</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carrier</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivery</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Shipment
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Route
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Carrier
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Delivery
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Cost
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredShipments.map((shipment) => (
+              {filteredShipments.map((shipment: any) => (
                 <tr key={shipment.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-blue-600">{shipment.id}</div>
-                      <div className="text-sm text-gray-500">{shipment.orderId}</div>
-                      <div className="text-xs text-gray-400 font-mono">{shipment.trackingNumber}</div>
+                      <div className="text-sm font-medium text-blue-600">
+                        {shipment.id}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {shipment.orderId}
+                      </div>
+                      <div className="text-xs text-gray-400 font-mono">
+                        {shipment.trackingNumber}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{shipment.customer}</div>
-                    <div className="text-sm text-gray-500">{shipment.items} items</div>
-                    <div className="text-xs text-gray-400">{shipment.weight}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {shipment.customer}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {shipment.items} items
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {shipment.weight}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
@@ -364,7 +491,7 @@ const Fulfillment = () => {
                       </div>
                       <div className="flex items-center text-xs text-gray-500">
                         <Navigation className="w-3 h-3 mr-1" />
-                        {shipment.destination.split(',')[0]}
+                        {shipment.destination.split(",")[0]}
                       </div>
                     </div>
                   </td>
@@ -372,7 +499,11 @@ const Fulfillment = () => {
                     {shipment.carrier}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(shipment.status)}`}>
+                    <span
+                      className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                        shipment.status
+                      )}`}
+                    >
                       {getStatusIcon(shipment.status)}
                       <span className="ml-1">{shipment.status}</span>
                     </span>
@@ -391,7 +522,10 @@ const Fulfillment = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ${shipment.cost.toFixed(2)}
+                    $
+                    {typeof shipment.cost === "number"
+                      ? shipment.cost.toFixed(2)
+                      : shipment.cost}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center space-x-2">
@@ -408,12 +542,13 @@ const Fulfillment = () => {
             </tbody>
           </table>
         </div>
-        
+
         {/* Pagination */}
         <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
           <div className="text-sm text-gray-700">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of{' '}
-            <span className="font-medium">123</span> results
+            Showing <span className="font-medium">1</span> to{" "}
+            <span className="font-medium">{filteredShipments.length}</span> of{" "}
+            <span className="font-medium">{shipments.length}</span> results
           </div>
           <div className="flex space-x-2">
             <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
@@ -421,9 +556,6 @@ const Fulfillment = () => {
             </button>
             <button className="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
               1
-            </button>
-            <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              2
             </button>
             <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
               Next

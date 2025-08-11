@@ -194,3 +194,99 @@ export const useShopifyAnalytics = () => {
 
   return { analytics, loading, error, refetch: fetchAnalytics };
 };
+
+export const useShopifyOrderStats = () => {
+  const { isConnected } = useShopify();
+  const [orderStats, setOrderStats] = useState({
+    totalOrders: 0,
+    processing: 0,
+    completed: 0,
+    inTransit: 0,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchOrderStats = useCallback(async () => {
+    if (!isConnected) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await shopifyAPI.getOrders(250); // Get more orders for better stats
+      const orders = response.orders;
+
+      const stats = {
+        totalOrders: orders.length,
+        processing: orders.filter(
+          (order) =>
+            order.fulfillment_status === null ||
+            order.fulfillment_status === "pending" ||
+            order.fulfillment_status === "restocked"
+        ).length,
+        completed: orders.filter(
+          (order) => order.fulfillment_status === "fulfilled"
+        ).length,
+        inTransit: orders.filter(
+          (order) => order.fulfillment_status === "partial"
+        ).length,
+      };
+
+      setOrderStats(stats);
+    } catch (err) {
+      setError("Failed to fetch order statistics");
+      console.error("Failed to fetch order statistics:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [isConnected]);
+
+  useEffect(() => {
+    if (isConnected) {
+      fetchOrderStats();
+    }
+  }, [isConnected, fetchOrderStats]);
+
+  return { orderStats, loading, error, refetch: fetchOrderStats };
+};
+
+interface FulfillmentData {
+  shipments: any[];
+  fulfillmentCenters: any[];
+  totalShipments: number;
+  avgProcessingTime: string;
+  onTimeDeliveryRate: string;
+}
+
+export const useShopifyFulfillment = () => {
+  const { isConnected } = useShopify();
+  const [fulfillmentData, setFulfillmentData] =
+    useState<FulfillmentData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchFulfillmentData = useCallback(async () => {
+    if (!isConnected) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await shopifyAPI.getFulfillmentData();
+      setFulfillmentData(data);
+    } catch (err) {
+      setError("Failed to fetch fulfillment data");
+      console.error("Failed to fetch fulfillment data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [isConnected]);
+
+  useEffect(() => {
+    if (isConnected) {
+      fetchFulfillmentData();
+    }
+  }, [isConnected, fetchFulfillmentData]);
+
+  return { fulfillmentData, loading, error, refetch: fetchFulfillmentData };
+};

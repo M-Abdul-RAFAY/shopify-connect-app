@@ -13,7 +13,10 @@ import {
   Calendar,
   Mail,
 } from "lucide-react";
-import { useShopifyOrders } from "../hooks/useShopifyData";
+import {
+  useShopifyOrders,
+  useShopifyOrderStats,
+} from "../hooks/useShopifyData";
 import { useShopify } from "../contexts/ShopifyContext";
 
 const Orders = () => {
@@ -23,6 +26,7 @@ const Orders = () => {
 
   // Use Shopify data if connected, otherwise use placeholder data
   const { orders: shopifyOrders, loading, error } = useShopifyOrders();
+  const { orderStats, loading: statsLoading } = useShopifyOrderStats();
   const { isConnected, shopData } = useShopify();
 
   // Placeholder data for when not connected to Shopify
@@ -277,7 +281,11 @@ const Orders = () => {
               <Package className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">1,247</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {isConnected && !statsLoading
+                  ? orderStats.totalOrders.toLocaleString()
+                  : "1,247"}
+              </h3>
               <p className="text-gray-600 text-sm">Total Orders</p>
             </div>
           </div>
@@ -289,7 +297,11 @@ const Orders = () => {
               <Clock className="w-6 h-6 text-yellow-600" />
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">156</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {isConnected && !statsLoading
+                  ? orderStats.processing.toLocaleString()
+                  : "156"}
+              </h3>
               <p className="text-gray-600 text-sm">Processing</p>
             </div>
           </div>
@@ -301,7 +313,11 @@ const Orders = () => {
               <CheckCircle className="w-6 h-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">1,089</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {isConnected && !statsLoading
+                  ? orderStats.completed.toLocaleString()
+                  : "1,089"}
+              </h3>
               <p className="text-gray-600 text-sm">Completed</p>
             </div>
           </div>
@@ -313,7 +329,11 @@ const Orders = () => {
               <Truck className="w-6 h-6 text-purple-600" />
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">298</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {isConnected && !statsLoading
+                  ? orderStats.inTransit.toLocaleString()
+                  : "298"}
+              </h3>
               <p className="text-gray-600 text-sm">In Transit</p>
             </div>
           </div>

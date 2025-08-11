@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
-  CreditCard,
   Users,
   Truck,
   BarChart3,
@@ -24,7 +23,6 @@ import DashboardShopify from "./components/DashboardShopify";
 import Inventory from "./components/Inventory";
 import InventoryShopify from "./components/InventoryShopify";
 import Orders from "./components/Orders";
-import POS from "./components/POS";
 import Customers from "./components/Customers";
 import CustomersShopify from "./components/CustomersShopify";
 import Fulfillment from "./components/Fulfillment";
@@ -36,7 +34,6 @@ type Module =
   | "dashboard"
   | "inventory"
   | "orders"
-  | "pos"
   | "customers"
   | "fulfillment"
   | "analytics"
@@ -46,7 +43,6 @@ const navigation = [
   { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
   { id: "inventory", name: "Inventory", icon: Package },
   { id: "orders", name: "Orders", icon: ShoppingCart },
-  { id: "pos", name: "Point of Sale", icon: CreditCard },
   { id: "customers", name: "Customers", icon: Users },
   { id: "fulfillment", name: "Fulfillment", icon: Truck },
   { id: "analytics", name: "Analytics", icon: BarChart3 },
@@ -93,8 +89,6 @@ const MainApp: React.FC = () => {
         return isConnected ? <InventoryShopify /> : <Inventory />;
       case "orders":
         return <Orders />;
-      case "pos":
-        return <POS />;
       case "customers":
         return isConnected ? <CustomersShopify /> : <Customers />;
       case "fulfillment":
