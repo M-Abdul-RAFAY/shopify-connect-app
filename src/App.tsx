@@ -232,13 +232,6 @@ const MainApp: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-4">
-                <button className="relative p-2 rounded-lg hover:bg-gray-100">
-                  <Bell className="w-5 h-5 text-gray-600" />
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-xs text-white font-medium">
-                    3
-                  </span>
-                </button>
-
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                     <User className="w-5 h-5 text-gray-600" />
@@ -247,9 +240,7 @@ const MainApp: React.FC = () => {
                     <div className="text-sm font-medium text-gray-900">
                       {shopData?.shop_owner || "Store Owner"}
                     </div>
-                    <div className="text-xs text-gray-500">Store Manager</div>
                   </div>
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
                 </div>
               </div>
             </div>
