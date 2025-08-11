@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Search,
   Filter,
@@ -15,123 +15,171 @@ import {
   TrendingUp,
   Users,
   DollarSign,
-  MoreHorizontal
-} from 'lucide-react';
+  MoreHorizontal,
+} from "lucide-react";
 
 const Customers = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedTier, setSelectedTier] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedPurchaseDate, setSelectedPurchaseDate] = useState("");
 
   const customers = [
     {
       id: 1,
-      name: 'Alice Johnson',
-      email: 'alice.johnson@email.com',
-      phone: '+1 (555) 123-4567',
-      address: '123 Main St, New York, NY 10001',
-      joinDate: '2023-06-15',
-      lastPurchase: '2024-01-10',
+      name: "Alice Johnson",
+      email: "alice.johnson@email.com",
+      phone: "+1 (555) 123-4567",
+      address: "123 Main St, New York, NY 10001",
+      joinDate: "2023-06-15",
+      lastPurchase: "2024-01-10",
       totalOrders: 24,
       totalSpent: 3456.78,
       loyaltyPoints: 1250,
-      tier: 'Gold',
-      avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150'
+      tier: "Gold",
+      avatar:
+        "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150",
     },
     {
       id: 2,
-      name: 'Bob Smith',
-      email: 'bob.smith@email.com',
-      phone: '+1 (555) 987-6543',
-      address: '456 Oak Ave, Los Angeles, CA 90210',
-      joinDate: '2023-03-22',
-      lastPurchase: '2024-01-08',
+      name: "Bob Smith",
+      email: "bob.smith@email.com",
+      phone: "+1 (555) 987-6543",
+      address: "456 Oak Ave, Los Angeles, CA 90210",
+      joinDate: "2023-03-22",
+      lastPurchase: "2024-01-08",
       totalOrders: 18,
-      totalSpent: 2234.50,
+      totalSpent: 2234.5,
       loyaltyPoints: 890,
-      tier: 'Silver',
-      avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
+      tier: "Silver",
+      avatar:
+        "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150",
     },
     {
       id: 3,
-      name: 'Carol Davis',
-      email: 'carol.davis@email.com',
-      phone: '+1 (555) 456-7890',
-      address: '789 Pine St, Chicago, IL 60601',
-      joinDate: '2022-11-08',
-      lastPurchase: '2024-01-12',
+      name: "Carol Davis",
+      email: "carol.davis@email.com",
+      phone: "+1 (555) 456-7890",
+      address: "789 Pine St, Chicago, IL 60601",
+      joinDate: "2022-11-08",
+      lastPurchase: "2024-01-12",
       totalOrders: 45,
       totalSpent: 7890.25,
       loyaltyPoints: 2150,
-      tier: 'Platinum',
-      avatar: 'https://images.pexels.com/photos/712513/pexels-photo-712513.jpeg?auto=compress&cs=tinysrgb&w=150'
+      tier: "Platinum",
+      avatar:
+        "https://images.pexels.com/photos/712513/pexels-photo-712513.jpeg?auto=compress&cs=tinysrgb&w=150",
     },
     {
       id: 4,
-      name: 'David Wilson',
-      email: 'david.wilson@email.com',
-      phone: '+1 (555) 321-0987',
-      address: '321 Elm Dr, Miami, FL 33101',
-      joinDate: '2024-01-05',
-      lastPurchase: '2024-01-05',
+      name: "David Wilson",
+      email: "david.wilson@email.com",
+      phone: "+1 (555) 321-0987",
+      address: "321 Elm Dr, Miami, FL 33101",
+      joinDate: "2024-01-05",
+      lastPurchase: "2024-01-05",
       totalOrders: 1,
       totalSpent: 156.99,
       loyaltyPoints: 50,
-      tier: 'Bronze',
-      avatar: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=150'
+      tier: "Bronze",
+      avatar:
+        "https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=150",
     },
     {
       id: 5,
-      name: 'Eva Brown',
-      email: 'eva.brown@email.com',
-      phone: '+1 (555) 654-3210',
-      address: '654 Maple Ln, Seattle, WA 98101',
-      joinDate: '2023-09-14',
-      lastPurchase: '2024-01-14',
+      name: "Eva Brown",
+      email: "eva.brown@email.com",
+      phone: "+1 (555) 654-3210",
+      address: "654 Maple Ln, Seattle, WA 98101",
+      joinDate: "2023-09-14",
+      lastPurchase: "2024-01-14",
       totalOrders: 32,
-      totalSpent: 4567.80,
+      totalSpent: 4567.8,
       loyaltyPoints: 1680,
-      tier: 'Gold',
-      avatar: 'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=150'
-    }
+      tier: "Gold",
+      avatar:
+        "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=150",
+    },
   ];
 
   const getTierColor = (tier: string) => {
     switch (tier) {
-      case 'Platinum':
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-      case 'Gold':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      case 'Silver':
-        return 'bg-gray-100 text-gray-700 border-gray-300';
-      case 'Bronze':
-        return 'bg-orange-100 text-orange-800 border-orange-300';
+      case "Platinum":
+        return "bg-gray-100 text-gray-800 border-gray-300";
+      case "Gold":
+        return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      case "Silver":
+        return "bg-gray-100 text-gray-700 border-gray-300";
+      case "Bronze":
+        return "bg-orange-100 text-orange-800 border-orange-300";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone.includes(searchTerm)
-  );
+  const filteredCustomers = customers.filter((customer) => {
+    // Search filter
+    const matchesSearch =
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone.includes(searchTerm);
+
+    // Tier filter
+    const matchesTier = !selectedTier || customer.tier === selectedTier;
+
+    // Location filter (extract city from address)
+    const customerCity = customer.address
+      .split(",")[1]
+      ?.trim()
+      .split(",")[0]
+      ?.trim();
+    const matchesLocation =
+      !selectedLocation || customerCity === selectedLocation;
+
+    // Purchase date filter
+    let matchesPurchaseDate = true;
+    if (selectedPurchaseDate) {
+      const lastPurchaseDate = new Date(customer.lastPurchase);
+      const now = new Date();
+      const daysDiff = Math.floor(
+        (now.getTime() - lastPurchaseDate.getTime()) / (1000 * 3600 * 24)
+      );
+
+      if (selectedPurchaseDate === "Last 30 days") {
+        matchesPurchaseDate = daysDiff <= 30;
+      } else if (selectedPurchaseDate === "Last 90 days") {
+        matchesPurchaseDate = daysDiff <= 90;
+      } else if (selectedPurchaseDate === "Last year") {
+        matchesPurchaseDate = daysDiff <= 365;
+      }
+    }
+
+    return (
+      matchesSearch && matchesTier && matchesLocation && matchesPurchaseDate
+    );
+  });
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Customer Management</h1>
-          <p className="text-gray-600 mt-1">Manage customer relationships and loyalty programs</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Customer Management
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage customer relationships and loyalty programs
+          </p>
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3">
           <button className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium">
@@ -158,7 +206,7 @@ const Customers = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-green-100">
@@ -170,7 +218,7 @@ const Customers = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-purple-100">
@@ -182,7 +230,7 @@ const Customers = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-yellow-100">
@@ -211,7 +259,7 @@ const Customers = () => {
               />
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setFilterOpen(!filterOpen)}
@@ -222,33 +270,58 @@ const Customers = () => {
             </button>
           </div>
         </div>
-        
+
         {filterOpen && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>All Tiers</option>
-                <option>Platinum</option>
-                <option>Gold</option>
-                <option>Silver</option>
-                <option>Bronze</option>
+              <select
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedTier}
+                onChange={(e) => setSelectedTier(e.target.value)}
+              >
+                <option value="">All Tiers</option>
+                <option value="Platinum">Platinum</option>
+                <option value="Gold">Gold</option>
+                <option value="Silver">Silver</option>
+                <option value="Bronze">Bronze</option>
               </select>
-              <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>All Locations</option>
-                <option>New York</option>
-                <option>Los Angeles</option>
-                <option>Chicago</option>
-                <option>Miami</option>
+              <select
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+              >
+                <option value="">All Locations</option>
+                <option value="New York">New York</option>
+                <option value="Los Angeles">Los Angeles</option>
+                <option value="Chicago">Chicago</option>
+                <option value="Miami">Miami</option>
+                <option value="Seattle">Seattle</option>
               </select>
-              <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>Last Purchase</option>
-                <option>Last 30 days</option>
-                <option>Last 90 days</option>
-                <option>Last year</option>
+              <select
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedPurchaseDate}
+                onChange={(e) => setSelectedPurchaseDate(e.target.value)}
+              >
+                <option value="">Last Purchase</option>
+                <option value="Last 30 days">Last 30 days</option>
+                <option value="Last 90 days">Last 90 days</option>
+                <option value="Last year">Last year</option>
               </select>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
-                Apply Filters
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    setSelectedTier("");
+                    setSelectedLocation("");
+                    setSelectedPurchaseDate("");
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                >
+                  Clear
+                </button>
+                <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                  Apply Filters
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -260,13 +333,27 @@ const Customers = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Spent</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loyalty</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Purchase</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Contact
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Orders
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total Spent
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Loyalty
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Last Purchase
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -274,9 +361,15 @@ const Customers = () => {
                 <tr key={customer.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <img className="h-12 w-12 rounded-full object-cover" src={customer.avatar} alt={customer.name} />
+                      <img
+                        className="h-12 w-12 rounded-full object-cover"
+                        src={customer.avatar}
+                        alt={customer.name}
+                      />
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{customer.name}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {customer.name}
+                        </div>
                         <div className="text-sm text-gray-500 flex items-center">
                           <Calendar className="w-3 h-3 mr-1" />
                           Joined {formatDate(customer.joinDate)}
@@ -297,19 +390,32 @@ const Customers = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <ShoppingBag className="w-4 h-4 mr-2 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-900">{customer.totalOrders}</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {customer.totalOrders}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">${customer.totalSpent.toFixed(2)}</div>
-                    <div className="text-sm text-gray-500">Avg: ${(customer.totalSpent / customer.totalOrders).toFixed(2)}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      ${customer.totalSpent.toFixed(2)}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Avg: $
+                      {(customer.totalSpent / customer.totalOrders).toFixed(2)}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border ${getTierColor(customer.tier)}`}>
+                    <div
+                      className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border ${getTierColor(
+                        customer.tier
+                      )}`}
+                    >
                       <Star className="w-3 h-3 mr-1" />
                       {customer.tier}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">{customer.loyaltyPoints} points</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {customer.loyaltyPoints} points
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatDate(customer.lastPurchase)}
@@ -332,11 +438,12 @@ const Customers = () => {
             </tbody>
           </table>
         </div>
-        
+
         {/* Pagination */}
         <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
           <div className="text-sm text-gray-700">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of{' '}
+            Showing <span className="font-medium">1</span> to{" "}
+            <span className="font-medium">5</span> of{" "}
             <span className="font-medium">34,892</span> results
           </div>
           <div className="flex space-x-2">

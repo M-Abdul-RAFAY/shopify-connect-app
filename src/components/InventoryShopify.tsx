@@ -16,6 +16,9 @@ import { useShopifyProducts } from "../hooks/useShopifyData";
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedVendor, setSelectedVendor] = useState("");
   const { products, loading, error } = useShopifyProducts();
 
   if (loading) {
@@ -76,12 +79,36 @@ const Inventory = () => {
     return { icon: TrendingUp, color: "text-green-500" };
   };
 
-  const filteredItems = products.filter(
-    (product) =>
+  const filteredItems = products.filter((product) => {
+    // Search filter
+    const matchesSearch =
       product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.id.toString().includes(searchTerm) ||
-      product.product_type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      product.product_type.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Category filter
+    const matchesCategory =
+      !selectedCategory || product.product_type === selectedCategory;
+
+    // Vendor filter
+    const matchesVendor = !selectedVendor || product.vendor === selectedVendor;
+
+    // Status filter
+    const totalStock = product.variants.reduce(
+      (sum, variant) => sum + variant.inventory_quantity,
+      0
+    );
+    let matchesStatus = true;
+    if (selectedStatus === "in-stock") {
+      matchesStatus = totalStock > 10;
+    } else if (selectedStatus === "low-stock") {
+      matchesStatus = totalStock > 0 && totalStock <= 10;
+    } else if (selectedStatus === "out-of-stock") {
+      matchesStatus = totalStock === 0;
+    }
+
+    return matchesSearch && matchesCategory && matchesVendor && matchesStatus;
+  });
 
   const totalProducts = products.length;
   const inStockProducts = products.filter((p) =>
@@ -214,7 +241,11 @@ const Inventory = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                >
                   <option value="">All Categories</option>
                   {[...new Set(products.map((p) => p.product_type))].map(
                     (type) => (
@@ -229,7 +260,11 @@ const Inventory = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Status
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                >
                   <option value="">All Status</option>
                   <option value="in-stock">In Stock</option>
                   <option value="low-stock">Low Stock</option>
@@ -240,7 +275,11 @@ const Inventory = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Vendor
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedVendor}
+                  onChange={(e) => setSelectedVendor(e.target.value)}
+                >
                   <option value="">All Vendors</option>
                   {[...new Set(products.map((p) => p.vendor))].map((vendor) => (
                     <option key={vendor} value={vendor}>
@@ -249,8 +288,18 @@ const Inventory = () => {
                   ))}
                 </select>
               </div>
-              <div className="flex items-end">
-                <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <div className="flex items-end space-x-2">
+                <button
+                  onClick={() => {
+                    setSelectedCategory("");
+                    setSelectedStatus("");
+                    setSelectedVendor("");
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Clear Filters
+                </button>
+                <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                   Apply Filters
                 </button>
               </div>

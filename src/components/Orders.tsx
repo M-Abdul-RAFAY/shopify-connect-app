@@ -23,6 +23,9 @@ const Orders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedChannel, setSelectedChannel] = useState("");
+  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState("");
 
   // Use Shopify data if connected, otherwise use placeholder data
   const { orders: shopifyOrders, loading, error } = useShopifyOrders();
@@ -246,12 +249,28 @@ const Orders = () => {
     });
   };
 
-  const filteredOrders = orders.filter(
-    (order) =>
+  const filteredOrders = orders.filter((order) => {
+    // Search filter
+    const matchesSearch =
       order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      order.customer.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Status filter
+    const matchesStatus = !selectedStatus || order.status === selectedStatus;
+
+    // Channel filter
+    const matchesChannel =
+      !selectedChannel || order.channel === selectedChannel;
+
+    // Payment status filter
+    const matchesPaymentStatus =
+      !selectedPaymentStatus || order.paymentStatus === selectedPaymentStatus;
+
+    return (
+      matchesSearch && matchesStatus && matchesChannel && matchesPaymentStatus
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -365,29 +384,54 @@ const Orders = () => {
         {filterOpen && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>All Status</option>
-                <option>Processing</option>
-                <option>Shipped</option>
-                <option>Delivered</option>
-                <option>Cancelled</option>
+              <select
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
+                <option value="">All Status</option>
+                <option value="Processing">Processing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+                <option value="Pending">Pending</option>
               </select>
-              <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>All Channels</option>
-                <option>Online Store</option>
-                <option>Mobile App</option>
-                <option>In-Store</option>
-                <option>Marketplace</option>
+              <select
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedChannel}
+                onChange={(e) => setSelectedChannel(e.target.value)}
+              >
+                <option value="">All Channels</option>
+                <option value="Online Store">Online Store</option>
+                <option value="Mobile App">Mobile App</option>
+                <option value="In-Store">In-Store</option>
+                <option value="Marketplace">Marketplace</option>
               </select>
-              <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>All Payment Status</option>
-                <option>Paid</option>
-                <option>Pending</option>
-                <option>Refunded</option>
+              <select
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedPaymentStatus}
+                onChange={(e) => setSelectedPaymentStatus(e.target.value)}
+              >
+                <option value="">All Payment Status</option>
+                <option value="Paid">Paid</option>
+                <option value="Pending">Pending</option>
+                <option value="Refunded">Refunded</option>
               </select>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
-                Apply Filters
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    setSelectedStatus("");
+                    setSelectedChannel("");
+                    setSelectedPaymentStatus("");
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                >
+                  Clear
+                </button>
+                <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                  Apply Filters
+                </button>
+              </div>
             </div>
           </div>
         )}

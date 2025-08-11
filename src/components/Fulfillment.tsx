@@ -19,6 +19,9 @@ import { useShopify } from "../contexts/ShopifyContext";
 const Fulfillment = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedCarrier, setSelectedCarrier] = useState("");
+  const [selectedOrigin, setSelectedOrigin] = useState("");
 
   // Use Shopify data if connected, otherwise use placeholder data
   const { fulfillmentData, loading, error } = useShopifyFulfillment();
@@ -231,13 +234,26 @@ const Fulfillment = () => {
     });
   };
 
-  const filteredShipments = shipments.filter(
-    (shipment: any) =>
+  const filteredShipments = shipments.filter((shipment: any) => {
+    // Search filter
+    const matchesSearch =
       shipment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       shipment.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       shipment.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shipment.trackingNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      shipment.trackingNumber.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Status filter
+    const matchesStatus = !selectedStatus || shipment.status === selectedStatus;
+
+    // Carrier filter
+    const matchesCarrier =
+      !selectedCarrier || shipment.carrier === selectedCarrier;
+
+    // Origin filter
+    const matchesOrigin = !selectedOrigin || shipment.origin === selectedOrigin;
+
+    return matchesSearch && matchesStatus && matchesCarrier && matchesOrigin;
+  });
 
   return (
     <div className="space-y-6">
@@ -394,31 +410,55 @@ const Fulfillment = () => {
         {filterOpen && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>All Status</option>
-                <option>Processing</option>
-                <option>Ready to Ship</option>
-                <option>In Transit</option>
-                <option>Delivered</option>
-                <option>Exception</option>
+              <select
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
+                <option value="">All Status</option>
+                <option value="Processing">Processing</option>
+                <option value="Ready to Ship">Ready to Ship</option>
+                <option value="In Transit">In Transit</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Exception">Exception</option>
               </select>
-              <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>All Carriers</option>
-                <option>FedEx</option>
-                <option>UPS</option>
-                <option>DHL</option>
-                <option>USPS</option>
+              <select
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedCarrier}
+                onChange={(e) => setSelectedCarrier(e.target.value)}
+              >
+                <option value="">All Carriers</option>
+                <option value="FedEx">FedEx</option>
+                <option value="UPS">UPS</option>
+                <option value="DHL">DHL</option>
+                <option value="USPS">USPS</option>
               </select>
-              <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>All Origins</option>
-                <option>Main Warehouse</option>
-                <option>West Coast Hub</option>
-                <option>Chicago Store</option>
-                <option>Southeast Hub</option>
+              <select
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedOrigin}
+                onChange={(e) => setSelectedOrigin(e.target.value)}
+              >
+                <option value="">All Origins</option>
+                <option value="Main Warehouse">Main Warehouse</option>
+                <option value="West Coast Hub">West Coast Hub</option>
+                <option value="Chicago Store">Chicago Store</option>
+                <option value="Southeast Hub">Southeast Hub</option>
               </select>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
-                Apply Filters
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    setSelectedStatus("");
+                    setSelectedCarrier("");
+                    setSelectedOrigin("");
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                >
+                  Clear
+                </button>
+                <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                  Apply Filters
+                </button>
+              </div>
             </div>
           </div>
         )}
