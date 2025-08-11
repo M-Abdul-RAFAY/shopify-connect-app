@@ -211,7 +211,7 @@ const MainApp: React.FC = () => {
         <div className="flex-1 flex flex-col">
           {/* Header */}
           <header className="bg-white shadow-sm border-b border-gray-200">
-            <div className="flex items-center justify-between h-16 px-6">
+            <div className="flex items-center justify-between h-16 px-2">
               <div className="flex items-center">
                 <button
                   onClick={() => setSidebarOpen(true)}
@@ -220,13 +220,8 @@ const MainApp: React.FC = () => {
                   <Menu className="w-5 h-5" />
                 </button>
                 <div className="hidden lg:flex items-center ml-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      placeholder="Search products, orders, customers..."
-                      className="pl-10 pr-4 py-2 w-96 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                    <Package className="w-5 h-5 text-white" />
                   </div>
                 </div>
               </div>
