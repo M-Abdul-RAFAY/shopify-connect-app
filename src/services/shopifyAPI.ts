@@ -1058,14 +1058,17 @@ class ShopifyAPI {
     // Create fulfillment/shipment data from orders
     const shipments = orders.orders.map((order, index) => {
       // Try to get real carrier from shipping lines
-      const realCarrier = order.shipping_lines && order.shipping_lines.length > 0 
-        ? order.shipping_lines[0].title || order.shipping_lines[0].carrier_identifier
-        : null;
-      
+      const realCarrier =
+        order.shipping_lines && order.shipping_lines.length > 0
+          ? order.shipping_lines[0].title ||
+            order.shipping_lines[0].carrier_identifier
+          : null;
+
       // Try to get real tracking from fulfillments
-      const realTracking = order.fulfillments && order.fulfillments.length > 0
-        ? order.fulfillments[0].tracking_number
-        : null;
+      const realTracking =
+        order.fulfillments && order.fulfillments.length > 0
+          ? order.fulfillments[0].tracking_number
+          : null;
 
       return {
         id: `SHP-${new Date().getFullYear()}-${String(index + 1).padStart(

@@ -43,7 +43,7 @@ export const useShopifyData = () => {
       const [productsRes, ordersRes, customersRes, shopRes, analyticsRes] =
         await Promise.all([
           shopifyAPI.getProducts(250), // Use Shopify's maximum limit
-          shopifyAPI.getOrders(250), // Use Shopify's maximum limit  
+          shopifyAPI.getOrders(250), // Use Shopify's maximum limit
           shopifyAPI.getCustomers(250), // Use Shopify's maximum limit
           shopifyAPI.getShop(),
           shopifyAPI.getAnalytics(),

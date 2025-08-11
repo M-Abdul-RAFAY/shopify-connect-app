@@ -24,9 +24,9 @@ const CustomersShopify = () => {
   const { customers, loading, error } = useShopifyCustomers();
   const { data: shopData } = useShopifyData();
   const { isConnected, shopData: contextShopData } = useShopify();
-  
+
   // Get shop currency or fallback to USD
-  const shopCurrency = shopData?.shop?.currency || 'USD';
+  const shopCurrency = shopData?.shop?.currency || "USD";
 
   if (!isConnected) {
     return (
@@ -173,8 +173,8 @@ const CustomersShopify = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
           <p className="text-gray-600 mt-1">
-            Manage customers from {shopData?.shop?.name} • {customers.length} total
-            customers
+            Manage customers from {shopData?.shop?.name} • {customers.length}{" "}
+            total customers
           </p>
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3"></div>
