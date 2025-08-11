@@ -18,8 +18,16 @@ import { useShopify } from "../contexts/ShopifyContext";
 
 const ShopifyConnect: React.FC = () => {
   const [shopDomain, setShopDomain] = useState("");
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const { connectShop, isLoading, error } = useShopify();
+  const [connectionMethod, setConnectionMethod] = useState<"oauth" | "api">(
+    "oauth"
+  );
+  const [apiCredentials, setApiCredentials] = useState({
+    accessToken: "",
+    apiKey: "",
+    apiSecret: "",
+  });
+  const { connectShop, connectWithCredentials, isLoading, error } =
+    useShopify();
 
   const handleQuickConnect = async () => {
     if (!shopDomain.trim()) return;
@@ -31,8 +39,20 @@ const ShopifyConnect: React.FC = () => {
     await connectShop(shopDomain);
   };
 
-  const handleQuickConnectExample = (domain: string) => {
-    setShopDomain(domain);
+  const handleApiConnect = async () => {
+    if (!shopDomain.trim() || !apiCredentials.accessToken.trim()) return;
+
+    try {
+      await connectWithCredentials(
+        shopDomain.trim(),
+        apiCredentials.accessToken.trim(),
+        apiCredentials.apiKey.trim() || undefined,
+        apiCredentials.apiSecret.trim() || undefined
+      );
+    } catch (error) {
+      console.error("API connection failed:", error);
+      // Error is handled by the context
+    }
   };
 
   const features = [
@@ -156,100 +176,281 @@ const ShopifyConnect: React.FC = () => {
             </p>
           </div>
 
-          {/* Advanced Options Toggle */}
+          {/* Advanced Options Toggle - Hidden for now */}
+          {/* 
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="text-blue-600 hover:text-blue-700 text-sm font-medium underline"
           >
             {showAdvanced ? "Hide" : "Show"} Advanced Options
           </button>
+          */}
         </div>
 
-        {/* Advanced Connection Form */}
-        {showAdvanced && (
-          <div className="max-w-lg mx-auto mb-16">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  Custom Store Connection
-                </h3>
-                <p className="text-gray-600">
-                  Enter your specific Shopify store domain
+        {/* API Connection Form */}
+        <div className="max-w-lg mx-auto mb-16">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Connect via API Credentials
+              </h3>
+              <p className="text-gray-600">
+                Use your Shopify Custom App credentials for direct API access
+              </p>
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>How to get your credentials:</strong>
+                  <br />
+                  1. Go to your Shopify Admin → Settings → Apps and sales
+                  channels
+                  <br />
+                  2. Click "Develop apps" → "Create an app"
+                  <br />
+                  3. Configure API scopes and install the app
+                  <br />
+                  4. Copy the Access Token from the API credentials section
+                </p>
+              </div>
+            </div>
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600">{error}</p>
+              </div>
+            )}
+
+            <div className="space-y-6">
+              {/* Connection Method Toggle */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Connection Method
+                </label>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => setConnectionMethod("oauth")}
+                    className={`flex-1 py-3 px-4 rounded-lg border text-sm font-medium transition-colors ${
+                      connectionMethod === "oauth"
+                        ? "bg-blue-50 border-blue-500 text-blue-700"
+                        : "bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    OAuth (Recommended)
+                  </button>
+                  <button
+                    onClick={() => setConnectionMethod("api")}
+                    className={`flex-1 py-3 px-4 rounded-lg border text-sm font-medium transition-colors ${
+                      connectionMethod === "api"
+                        ? "bg-blue-50 border-blue-500 text-blue-700"
+                        : "bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    API Credentials
+                  </button>
+                </div>
+              </div>
+
+              {/* Shop Domain */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Shopify Store Domain *
+                </label>
+                <div className="flex">
+                  <input
+                    type="text"
+                    value={shopDomain}
+                    onChange={(e) => setShopDomain(e.target.value)}
+                    placeholder="your-store-name"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={isLoading}
+                  />
+                  <div className="px-4 py-3 bg-gray-50 border border-l-0 border-gray-300 rounded-r-lg text-gray-500 text-sm flex items-center">
+                    .myshopify.com
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Enter just your store name, we'll add .myshopify.com
+                  automatically
                 </p>
               </div>
 
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-red-600">{error}</p>
+              {/* API Credentials Fields - Only show when API method is selected */}
+              {connectionMethod === "api" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Access Token *
+                    </label>
+                    <input
+                      type="password"
+                      value={apiCredentials.accessToken}
+                      onChange={(e) =>
+                        setApiCredentials({
+                          ...apiCredentials,
+                          accessToken: e.target.value,
+                        })
+                      }
+                      placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={isLoading}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      The access token from your Shopify custom app
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      API Key (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={apiCredentials.apiKey}
+                      onChange={(e) =>
+                        setApiCredentials({
+                          ...apiCredentials,
+                          apiKey: e.target.value,
+                        })
+                      }
+                      placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={isLoading}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Your app's API key (if using webhook verification)
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      API Secret (Optional)
+                    </label>
+                    <input
+                      type="password"
+                      value={apiCredentials.apiSecret}
+                      onChange={(e) =>
+                        setApiCredentials({
+                          ...apiCredentials,
+                          apiSecret: e.target.value,
+                        })
+                      }
+                      placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={isLoading}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Your app's API secret key (if using webhook verification)
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* Connect Button */}
+              <button
+                onClick={
+                  connectionMethod === "oauth"
+                    ? handleConnect
+                    : handleApiConnect
+                }
+                disabled={
+                  !shopDomain.trim() ||
+                  isLoading ||
+                  (connectionMethod === "api" &&
+                    !apiCredentials.accessToken.trim())
+                }
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Connecting...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>
+                      Connect via{" "}
+                      {connectionMethod === "oauth" ? "OAuth" : "API"}
+                    </span>
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+
+              {/* OAuth Info */}
+              {connectionMethod === "oauth" && (
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                      <Shield className="w-5 h-5 text-green-600 mt-0.5" />
+                      <div>
+                        <h4 className="text-sm font-medium text-green-800 mb-1">
+                          Secure OAuth Connection
+                        </h4>
+                        <p className="text-sm text-green-700">
+                          OAuth is the recommended and most secure way to
+                          connect. You'll be redirected to Shopify to authorize
+                          the connection.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Shopify Store Domain
-                  </label>
-                  <div className="flex">
-                    <input
-                      type="text"
-                      value={shopDomain}
-                      onChange={(e) => setShopDomain(e.target.value)}
-                      placeholder="your-store-name"
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      disabled={isLoading}
-                    />
-                    <div className="px-4 py-3 bg-gray-50 border border-l-0 border-gray-300 rounded-r-lg text-gray-500 text-sm flex items-center">
-                      .myshopify.com
+              {/* API Connection Info */}
+              {connectionMethod === "api" && (
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                      <Lock className="w-5 h-5 text-amber-600 mt-0.5" />
+                      <div>
+                        <h4 className="text-sm font-medium text-amber-800 mb-1">
+                          Direct API Connection
+                        </h4>
+                        <p className="text-sm text-amber-700">
+                          Using API credentials provides direct access. Make
+                          sure your custom app has the required API scopes for
+                          the features you want to use.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Enter just your store name, we'll add the .myshopify.com
-                    automatically
-                  </p>
-                </div>
 
-                <button
-                  onClick={handleConnect}
-                  disabled={!shopDomain.trim() || isLoading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span>Connecting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Connect Custom Store</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-
-                {/* Quick Examples */}
-                <div className="pt-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-500 mb-3 text-center">
-                    Quick examples:
-                  </p>
-                  <div className="flex flex-wrap gap-2 justify-center">
-                    {["demo-store", "my-shop", "retail-store"].map(
-                      (example) => (
-                        <button
-                          key={example}
-                          onClick={() => handleQuickConnectExample(example)}
-                          className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-600 transition-colors"
-                          disabled={isLoading}
-                        >
-                          {example}.myshopify.com
-                        </button>
-                      )
-                    )}
+                  {/* Required Scopes Info */}
+                  <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <h5 className="text-sm font-medium text-gray-800 mb-2">
+                      Recommended API Scopes:
+                    </h5>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <div>
+                        • <code>read_products, write_products</code> - Product
+                        management
+                      </div>
+                      <div>
+                        • <code>read_orders, write_orders</code> - Order
+                        management
+                      </div>
+                      <div>
+                        • <code>read_customers, write_customers</code> -
+                        Customer data
+                      </div>
+                      <div>
+                        • <code>read_inventory, write_inventory</code> -
+                        Inventory tracking
+                      </div>
+                      <div>
+                        • <code>read_analytics</code> - Analytics and reports
+                      </div>
+                      <div>
+                        • <code>read_fulfillments, write_fulfillments</code> -
+                        Order fulfillment
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">

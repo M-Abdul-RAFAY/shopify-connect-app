@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://d17f9614415c.ngrok-free.app"],
+    origin: ["http://localhost:5173", "https://01bcd64792c3.ngrok-free.app"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
@@ -87,6 +87,85 @@ app.post("/api/shopify/exchange-token", async (req, res) => {
 
     res.status(500).json({
       error: "Token exchange failed",
+      details: error.response?.data || error.message,
+    });
+  }
+});
+
+// Shopify API credentials validation endpoint
+app.post("/api/shopify/validate-credentials", async (req, res) => {
+  try {
+    const { shop, accessToken, apiKey, apiSecret } = req.body;
+
+    console.log("API credentials validation request received:", {
+      shop,
+      accessToken: accessToken
+        ? `${accessToken.substring(0, 10)}...`
+        : "missing",
+      apiKey: apiKey ? "present" : "missing",
+      apiSecret: apiSecret ? "present" : "missing",
+    });
+
+    if (!shop || !accessToken) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required parameters: shop and accessToken",
+      });
+    }
+
+    // Ensure we're using the full .myshopify.com domain
+    let fullShopDomain = shop;
+    if (!shop.includes(".myshopify.com")) {
+      fullShopDomain = `${shop}.myshopify.com`;
+    }
+
+    // Test the credentials by making a shop.json request
+    const shopUrl = `https://${fullShopDomain}/admin/api/2024-07/shop.json`;
+
+    console.log(
+      `Testing API credentials with shop info request to: ${shopUrl}`
+    );
+
+    const response = await axios({
+      method: "GET",
+      url: shopUrl,
+      headers: {
+        "X-Shopify-Access-Token": accessToken,
+        "Content-Type": "application/json",
+        "User-Agent": "Shopify-Connect-App/1.0",
+        Accept: "application/json",
+      },
+      timeout: 10000,
+    });
+
+    console.log("API credentials validation successful:", response.status);
+
+    res.json({
+      success: true,
+      message: "API credentials validated successfully",
+      shop: response.data.shop,
+    });
+  } catch (error) {
+    console.error("API credentials validation error:", error.message);
+    console.error("Error details:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      url: error.config?.url,
+    });
+
+    let errorMessage = "Invalid API credentials";
+    if (error.response?.status === 401) {
+      errorMessage = "Invalid access token. Please check your credentials.";
+    } else if (error.response?.status === 404) {
+      errorMessage = "Store not found. Please check your shop domain.";
+    } else if (error.response?.status === 403) {
+      errorMessage = "Access denied. Please check your API permissions.";
+    }
+
+    res.status(error.response?.status || 500).json({
+      success: false,
+      error: errorMessage,
       details: error.response?.data || error.message,
     });
   }

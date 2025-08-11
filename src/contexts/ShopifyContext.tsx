@@ -14,6 +14,12 @@ interface ShopifyContextType {
   error: string | null;
   isDemoMode: boolean;
   connectShop: (shopDomain: string) => Promise<void>;
+  connectWithCredentials: (
+    shopDomain: string,
+    accessToken: string,
+    apiKey?: string,
+    apiSecret?: string
+  ) => Promise<void>;
   disconnectShop: () => void;
   refreshShopData: () => Promise<void>;
   clearError: () => void;
@@ -91,6 +97,43 @@ export const ShopifyProvider: React.FC<ShopifyProviderProps> = ({
     }
   };
 
+  const connectWithCredentials = async (
+    shopDomain: string,
+    accessToken: string,
+    apiKey?: string,
+    apiSecret?: string
+  ) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log("Connecting with API credentials...");
+      const response = await shopifyAPI.connectWithCredentials(
+        shopDomain,
+        accessToken,
+        apiKey,
+        apiSecret
+      );
+
+      setShopData(response.shop);
+      setIsConnected(true);
+      setIsDemoMode(false);
+      setError(null);
+      console.log("API connection successful");
+    } catch (err) {
+      console.error("API connection failed:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to connect with API credentials"
+      );
+      setIsConnected(false);
+      setShopData(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const disconnectShop = () => {
     shopifyAPI.clearCredentials();
     setIsConnected(false);
@@ -133,6 +176,7 @@ export const ShopifyProvider: React.FC<ShopifyProviderProps> = ({
     error,
     isDemoMode,
     connectShop,
+    connectWithCredentials,
     disconnectShop,
     refreshShopData,
     clearError,

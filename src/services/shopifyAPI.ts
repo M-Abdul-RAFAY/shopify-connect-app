@@ -298,7 +298,7 @@ class ShopifyAPI {
       "read_products,read_orders,read_customers,read_shop";
     const redirectUri =
       import.meta.env.VITE_SHOPIFY_REDIRECT_URI ||
-      "https://d17f9614415c.ngrok-free.app/auth/callback";
+      "https://01bcd64792c3.ngrok-free.app/auth/callback";
     const state = Math.random().toString(36).substring(7);
 
     Cookies.set("shopify_oauth_state", state, { expires: 1 });
@@ -328,7 +328,7 @@ class ShopifyAPI {
       "read_products,read_orders,read_customers,read_shop";
     const redirectUri =
       import.meta.env.VITE_SHOPIFY_REDIRECT_URI ||
-      "https://d17f9614415c.ngrok-free.app/auth/callback";
+      "https://01bcd64792c3.ngrok-free.app/auth/callback";
     const state = Math.random().toString(36).substring(7);
 
     Cookies.set("shopify_oauth_state", state, { expires: 1 });
@@ -370,8 +370,7 @@ class ShopifyAPI {
 
     // Use backend proxy instead of direct Shopify API call
     const backendUrl =
-      import.meta.env.VITE_API_BASE_URL ||
-      "https://d17f9614415c.ngrok-free.app/api";
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
     const tokenUrl = `${backendUrl}/shopify/exchange-token`;
 
     console.log("Token exchange URL (via backend):", tokenUrl);
@@ -422,6 +421,131 @@ class ShopifyAPI {
         }`
       );
     }
+  }
+
+  async connectWithCredentials(
+    shopDomain: string,
+    accessToken: string,
+    apiKey?: string,
+    apiSecret?: string
+  ): Promise<{ shop: ShopifyStore }> {
+    console.log("Connecting with API credentials...");
+
+    // Clean the shop domain
+    let cleanShop = shopDomain
+      .replace(/^https?:\/\//, "") // Remove protocol
+      .replace(/\/$/, ""); // Remove trailing slash
+
+    // If it already includes .myshopify.com, extract just the shop name
+    if (cleanShop.includes(".myshopify.com")) {
+      cleanShop = cleanShop.replace(".myshopify.com", "");
+    }
+
+    console.log("Cleaned shop domain:", cleanShop);
+    console.log("Using access token:", accessToken.substring(0, 8) + "...");
+
+    try {
+      // Use backend to validate API credentials instead of direct calls
+      const backendUrl =
+        import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
+      const validateUrl = `${backendUrl}/shopify/validate-credentials`;
+
+      console.log("Validating API credentials via backend:", validateUrl);
+
+      const response = await axios.post(
+        validateUrl,
+        {
+          shop: cleanShop,
+          accessToken: accessToken,
+          apiKey: apiKey,
+          apiSecret: apiSecret,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("API credential validation response:", response.status);
+
+      if (response.data.success) {
+        // Set credentials if validation successful
+        this.setCredentials(accessToken, cleanShop);
+        console.log("API connection test successful");
+        return { shop: response.data.shop };
+      } else {
+        throw new Error(response.data.error || "Validation failed");
+      }
+    } catch (error) {
+      console.error("API connection failed:", error);
+
+      // Clear credentials if connection failed
+      this.clearCredentials();
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          throw new Error(
+            "Invalid access token. Please check your credentials."
+          );
+        } else if (error.response?.status === 404) {
+          throw new Error("Store not found. Please check your shop domain.");
+        } else {
+          throw new Error(
+            `Connection failed: ${error.response?.statusText || error.message}`
+          );
+        }
+      }
+
+      throw new Error(
+        `Failed to connect with API credentials: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  private async makeDirectRequest<T>(
+    endpoint: string,
+    method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+    data?: any
+  ): Promise<T> {
+    if (!this.accessToken || !this.shop) {
+      throw new Error("Not authenticated with Shopify");
+    }
+
+    try {
+      console.log(
+        `Making direct ${method} request to Shopify API: https://${this.shop}.myshopify.com/admin/api/2024-07${endpoint}`
+      );
+
+      const response = await axios({
+        method,
+        url: `https://${this.shop}.myshopify.com/admin/api/2024-07${endpoint}`,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": this.accessToken,
+        },
+        data: data ? JSON.stringify(data) : undefined,
+      });
+
+      console.log(`Direct request successful: ${response.status}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Direct request failed for ${endpoint}:`, error);
+      if (axios.isAxiosError(error)) {
+        console.error("Direct request error details:", {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+        });
+      }
+      throw error;
+    }
+  }
+
+  async getShopDirect(): Promise<{ shop: ShopifyStore }> {
+    return this.makeDirectRequest<{ shop: ShopifyStore }>("/shop.json");
   }
 
   private async makeRequest<T>(
