@@ -10,9 +10,11 @@ import {
   Star,
 } from "lucide-react";
 import { useShopifyData } from "../hooks/useShopifyData";
+import { useNavigation } from "../contexts/NavigationContext";
 
 const Dashboard = () => {
   const { data, loading, error } = useShopifyData();
+  const { setActiveModule } = useNavigation();
 
   if (loading) {
     return (
@@ -187,7 +189,10 @@ const Dashboard = () => {
               <h2 className="text-lg font-semibold text-gray-900">
                 Recent Orders
               </h2>
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+              <button
+                onClick={() => setActiveModule("orders")}
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
                 View All
               </button>
             </div>
@@ -293,7 +298,10 @@ const Dashboard = () => {
               </div>
             )}
             {lowStockItems.length > 0 && (
-              <button className="w-full mt-4 py-2 px-4 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium">
+              <button
+                onClick={() => setActiveModule("inventory")}
+                className="w-full mt-4 py-2 px-4 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+              >
                 Review Inventory
               </button>
             )}
