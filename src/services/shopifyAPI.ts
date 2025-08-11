@@ -8,6 +8,7 @@ export interface ShopifyStore {
   domain: string;
   province: string;
   country: string;
+  currency: string;
   address1: string;
   zip: string;
   city: string;
@@ -973,8 +974,8 @@ class ShopifyAPI {
 
   // Analytics - Using the Orders API to derive analytics
   async getAnalytics(): Promise<any> {
-    const orders = await this.getOrders(250); // Get more orders for better analytics
-    const products = await this.getProducts(250);
+    const orders = await this.getOrders(250); // Use Shopify's maximum limit
+    const products = await this.getProducts(250); // Use Shopify's maximum limit
 
     const analytics = {
       totalRevenue: orders.orders.reduce(
@@ -1055,35 +1056,47 @@ class ShopifyAPI {
     const orders = await this.getOrders(250);
 
     // Create fulfillment/shipment data from orders
-    const shipments = orders.orders.map((order, index) => ({
-      id: `SHP-${new Date().getFullYear()}-${String(index + 1).padStart(
-        3,
-        "0"
-      )}`,
-      orderId: order.name,
-      customer: order.customer
-        ? `${order.customer.first_name} ${order.customer.last_name}`
-        : "Guest Customer",
-      origin: "Main Warehouse",
-      destination: order.shipping_address
-        ? `${order.shipping_address.address1}, ${
-            order.shipping_address.city
-          }, ${
-            order.shipping_address.province || order.shipping_address.country
-          }`
-        : "Address not provided",
-      carrier: this.getRandomCarrier(),
-      trackingNumber: this.generateTrackingNumber(),
-      status: this.mapFulfillmentStatus(order.fulfillment_status),
-      estimatedDelivery: this.calculateEstimatedDelivery(order.created_at),
-      actualDelivery:
-        order.fulfillment_status === "fulfilled"
-          ? this.calculateActualDelivery(order.created_at)
-          : null,
-      items: order.line_items.length,
-      weight: `${(Math.random() * 5 + 0.5).toFixed(1)} lbs`,
-      cost: (Math.random() * 20 + 5).toFixed(2),
-    }));
+    const shipments = orders.orders.map((order, index) => {
+      // Try to get real carrier from shipping lines
+      const realCarrier = order.shipping_lines && order.shipping_lines.length > 0 
+        ? order.shipping_lines[0].title || order.shipping_lines[0].carrier_identifier
+        : null;
+      
+      // Try to get real tracking from fulfillments
+      const realTracking = order.fulfillments && order.fulfillments.length > 0
+        ? order.fulfillments[0].tracking_number
+        : null;
+
+      return {
+        id: `SHP-${new Date().getFullYear()}-${String(index + 1).padStart(
+          3,
+          "0"
+        )}`,
+        orderId: order.name,
+        customer: order.customer
+          ? `${order.customer.first_name} ${order.customer.last_name}`
+          : "Guest Customer",
+        origin: "Main Warehouse",
+        destination: order.shipping_address
+          ? `${order.shipping_address.address1}, ${
+              order.shipping_address.city
+            }, ${
+              order.shipping_address.province || order.shipping_address.country
+            }`
+          : "Address not provided",
+        carrier: realCarrier || "Not specified",
+        trackingNumber: realTracking || "Not available",
+        status: this.mapFulfillmentStatus(order.fulfillment_status),
+        estimatedDelivery: this.calculateEstimatedDelivery(order.created_at),
+        actualDelivery:
+          order.fulfillment_status === "fulfilled"
+            ? this.calculateActualDelivery(order.created_at)
+            : null,
+        items: order.line_items.length,
+        weight: `${(Math.random() * 5 + 0.5).toFixed(1)} lbs`,
+        cost: (Math.random() * 20 + 5).toFixed(2),
+      };
+    });
 
     const fulfillmentCenters = [
       {

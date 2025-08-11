@@ -11,7 +11,8 @@ import {
   Edit2,
   Trash2,
 } from "lucide-react";
-import { useShopifyProducts } from "../hooks/useShopifyData";
+import { useShopifyProducts, useShopifyData } from "../hooks/useShopifyData";
+import { formatCurrency } from "../utils/currency";
 
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,6 +21,10 @@ const Inventory = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedVendor, setSelectedVendor] = useState("");
   const { products, loading, error } = useShopifyProducts();
+  const { data: shopData } = useShopifyData();
+
+  // Get shop currency or fallback to USD
+  const shopCurrency = shopData?.shop?.currency || "USD";
 
   if (loading) {
     return (
@@ -392,7 +397,10 @@ const Inventory = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${parseFloat(mainVariant.price).toFixed(2)}
+                      {formatCurrency(
+                        parseFloat(mainVariant.price),
+                        shopCurrency
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span

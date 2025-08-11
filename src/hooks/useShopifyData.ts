@@ -4,6 +4,7 @@ import {
   ShopifyProduct,
   ShopifyOrder,
   ShopifyCustomer,
+  ShopifyStore,
 } from "../services/shopifyAPI";
 import { useShopify } from "../contexts/ShopifyContext";
 
@@ -24,6 +25,7 @@ export const useShopifyData = () => {
     products: [] as ShopifyProduct[],
     orders: [] as ShopifyOrder[],
     customers: [] as ShopifyCustomer[],
+    shop: null as ShopifyStore | null,
     analytics: null as AnalyticsData | null,
   });
   const [loading, setLoading] = useState(false);
@@ -38,11 +40,12 @@ export const useShopifyData = () => {
     try {
       console.log("Starting to fetch all Shopify data...");
 
-      const [productsRes, ordersRes, customersRes, analyticsRes] =
+      const [productsRes, ordersRes, customersRes, shopRes, analyticsRes] =
         await Promise.all([
-          shopifyAPI.getProducts(50),
-          shopifyAPI.getOrders(50),
-          shopifyAPI.getCustomers(50),
+          shopifyAPI.getProducts(250), // Use Shopify's maximum limit
+          shopifyAPI.getOrders(250), // Use Shopify's maximum limit  
+          shopifyAPI.getCustomers(250), // Use Shopify's maximum limit
+          shopifyAPI.getShop(),
           shopifyAPI.getAnalytics(),
         ]);
 
@@ -50,6 +53,7 @@ export const useShopifyData = () => {
         products: productsRes.products?.length || 0,
         orders: ordersRes.orders?.length || 0,
         customers: customersRes.customers?.length || 0,
+        shop: shopRes.shop?.name || "unknown",
         analytics: analyticsRes ? "available" : "unavailable",
       });
 
@@ -57,6 +61,7 @@ export const useShopifyData = () => {
         products: productsRes.products,
         orders: ordersRes.orders,
         customers: customersRes.customers,
+        shop: shopRes.shop,
         analytics: analyticsRes,
       });
     } catch (err) {

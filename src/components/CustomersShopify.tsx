@@ -14,14 +14,19 @@ import {
   ShoppingBag,
   Star,
 } from "lucide-react";
-import { useShopifyCustomers } from "../hooks/useShopifyData";
+import { useShopifyCustomers, useShopifyData } from "../hooks/useShopifyData";
 import { useShopify } from "../contexts/ShopifyContext";
+import { formatCurrency as formatCurrencyUtil } from "../utils/currency";
 
 const CustomersShopify = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("created_at");
   const { customers, loading, error } = useShopifyCustomers();
-  const { isConnected, shopData } = useShopify();
+  const { data: shopData } = useShopifyData();
+  const { isConnected, shopData: contextShopData } = useShopify();
+  
+  // Get shop currency or fallback to USD
+  const shopCurrency = shopData?.shop?.currency || 'USD';
 
   if (!isConnected) {
     return (
@@ -44,7 +49,7 @@ const CustomersShopify = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
           <p className="text-gray-600 mt-1">
-            Loading your customers from {shopData?.name}...
+            Loading your customers from {shopData?.shop?.name}...
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -149,8 +154,7 @@ const CustomersShopify = () => {
   };
 
   const formatCurrency = (amount: string | number) => {
-    const num = typeof amount === "string" ? parseFloat(amount) : amount;
-    return `$${num.toFixed(2)}`;
+    return formatCurrencyUtil(amount, shopCurrency);
   };
 
   const formatDate = (dateString: string) => {
@@ -169,7 +173,7 @@ const CustomersShopify = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
           <p className="text-gray-600 mt-1">
-            Manage customers from {shopData?.name} • {customers.length} total
+            Manage customers from {shopData?.shop?.name} • {customers.length} total
             customers
           </p>
         </div>
