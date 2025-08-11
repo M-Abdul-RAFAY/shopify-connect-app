@@ -1008,7 +1008,7 @@ class ShopifyAPI {
       order.line_items.forEach((item) => {
         // Skip items without a product_id (could be custom items or null)
         if (!item.product_id) return;
-        
+
         const key = item.product_id.toString();
         if (!productSales[key]) {
           productSales[key] = {
