@@ -85,6 +85,27 @@ const CustomersShopify = () => {
     );
   });
 
+  // Apply sorting to filtered customers
+  const sortedCustomers = [...filteredCustomers].sort((a, b) => {
+    switch (sortBy) {
+      case "created_at":
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      case "total_spent":
+        return parseFloat(b.total_spent) - parseFloat(a.total_spent);
+      case "orders_count":
+        return b.orders_count - a.orders_count;
+      case "last_name": {
+        const aLastName = a.last_name || a.email;
+        const bLastName = b.last_name || b.email;
+        return aLastName.localeCompare(bLastName);
+      }
+      default:
+        return 0;
+    }
+  });
+
   const getTierFromSpent = (totalSpent: string) => {
     const spent = parseFloat(totalSpent);
     if (spent >= 1000) return "Platinum";
@@ -251,7 +272,7 @@ const CustomersShopify = () => {
 
       {/* Customers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCustomers.map((customer) => {
+        {sortedCustomers.map((customer) => {
           const tier = getTierFromSpent(customer.total_spent);
           return (
             <div
@@ -336,7 +357,7 @@ const CustomersShopify = () => {
           );
         })}
 
-        {filteredCustomers.length === 0 && (
+        {sortedCustomers.length === 0 && (
           <div className="col-span-full text-center py-12">
             <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500">No customers found</p>
@@ -348,8 +369,8 @@ const CustomersShopify = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-700">
-            Showing {Math.min(filteredCustomers.length, 50)} of{" "}
-            {filteredCustomers.length} customers
+            Showing {Math.min(sortedCustomers.length, 50)} of{" "}
+            {sortedCustomers.length} customers
           </div>
           <div className="flex space-x-2">
             <button className="px-3 py-1 border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50">

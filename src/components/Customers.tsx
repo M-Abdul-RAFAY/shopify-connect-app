@@ -24,6 +24,7 @@ const Customers = () => {
   const [selectedTier, setSelectedTier] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedPurchaseDate, setSelectedPurchaseDate] = useState("");
+  const [sortBy, setSortBy] = useState("name");
 
   const customers = [
     {
@@ -138,11 +139,7 @@ const Customers = () => {
     const matchesTier = !selectedTier || customer.tier === selectedTier;
 
     // Location filter (extract city from address)
-    const customerCity = customer.address
-      .split(",")[1]
-      ?.trim()
-      .split(",")[0]
-      ?.trim();
+    const customerCity = customer.address.split(",")[1]?.trim(); // Get the city part and trim whitespace
     const matchesLocation =
       !selectedLocation || customerCity === selectedLocation;
 
@@ -164,9 +161,45 @@ const Customers = () => {
       }
     }
 
+    // Debug log to help verify filtering
+    if (selectedTier || selectedLocation || selectedPurchaseDate) {
+      console.log(
+        `Customer: ${customer.name}, City: "${customerCity}", Tier: ${
+          customer.tier
+        }, Matches: ${
+          matchesSearch && matchesTier && matchesLocation && matchesPurchaseDate
+        }`
+      );
+    }
+
     return (
       matchesSearch && matchesTier && matchesLocation && matchesPurchaseDate
     );
+  });
+
+  // Apply sorting to filtered customers
+  const sortedCustomers = [...filteredCustomers].sort((a, b) => {
+    switch (sortBy) {
+      case "name":
+        return a.name.localeCompare(b.name);
+      case "tier": {
+        const tierOrder: { [key: string]: number } = {
+          Platinum: 4,
+          Gold: 3,
+          Silver: 2,
+          Bronze: 1,
+        };
+        return tierOrder[b.tier] - tierOrder[a.tier];
+      }
+      case "totalSpent":
+        return b.totalSpent - a.totalSpent;
+      case "totalOrders":
+        return b.totalOrders - a.totalOrders;
+      case "joinDate":
+        return new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime();
+      default:
+        return 0;
+    }
   });
 
   return (
@@ -261,6 +294,17 @@ const Customers = () => {
           </div>
 
           <div className="flex items-center space-x-3">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="name">Name A-Z</option>
+              <option value="tier">Tier (Highest)</option>
+              <option value="totalSpent">Highest Spent</option>
+              <option value="totalOrders">Most Orders</option>
+              <option value="joinDate">Newest First</option>
+            </select>
             <button
               onClick={() => setFilterOpen(!filterOpen)}
               className="flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
@@ -357,7 +401,7 @@ const Customers = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCustomers.map((customer) => (
+              {sortedCustomers.map((customer) => (
                 <tr key={customer.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
