@@ -265,12 +265,7 @@ const Orders = () => {
               : "Track and manage all customer orders"}
           </p>
         </div>
-        <div className="mt-4 sm:mt-0 flex space-x-3">
-          <button className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </button>
-        </div>
+        <div className="mt-4 sm:mt-0 flex space-x-3"></div>
       </div>
 
       {/* Stats Cards */}
