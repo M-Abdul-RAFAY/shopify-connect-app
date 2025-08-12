@@ -1,10 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Search,
   Filter,
-  Download,
-  Eye,
-  MoreHorizontal,
   Package,
   Truck,
   CheckCircle,
@@ -18,11 +15,13 @@ import {
   useShopifyOrderStats,
 } from "../hooks/useShopifyData";
 import { useShopify } from "../contexts/ShopifyContext";
+import { formatCurrencyWithShop } from "../utils/currency";
+import { usePagination } from "../hooks/usePagination";
+import { PaginationControls } from "../utils/pagination.tsx";
 
 const Orders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedChannel, setSelectedChannel] = useState("");
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState("");
@@ -152,6 +151,34 @@ const Orders = () => {
         }))
       : placeholderOrders;
 
+  // Filtered orders for searching and filtering
+  const filteredOrders = orders.filter((order) => {
+    // Search filter
+    const matchesSearch =
+      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Status filter
+    const matchesStatus = !selectedStatus || order.status === selectedStatus;
+
+    // Channel filter
+    const matchesChannel =
+      !selectedChannel || order.channel === selectedChannel;
+
+    // Payment status filter
+    const matchesPaymentStatus =
+      !selectedPaymentStatus || order.paymentStatus === selectedPaymentStatus;
+
+    return (
+      matchesSearch && matchesStatus && matchesChannel && matchesPaymentStatus
+    );
+  });
+
+  // Initialize pagination with filtered data
+  const paginationData = usePagination(filteredOrders, 10);
+  const paginatedOrders = paginationData.items;
+
   // Show loading state when connected and fetching data
   if (isConnected && loading) {
     return (
@@ -249,29 +276,6 @@ const Orders = () => {
     });
   };
 
-  const filteredOrders = orders.filter((order) => {
-    // Search filter
-    const matchesSearch =
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-    // Status filter
-    const matchesStatus = !selectedStatus || order.status === selectedStatus;
-
-    // Channel filter
-    const matchesChannel =
-      !selectedChannel || order.channel === selectedChannel;
-
-    // Payment status filter
-    const matchesPaymentStatus =
-      !selectedPaymentStatus || order.paymentStatus === selectedPaymentStatus;
-
-    return (
-      matchesSearch && matchesStatus && matchesChannel && matchesPaymentStatus
-    );
-  });
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -280,7 +284,13 @@ const Orders = () => {
           <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
           <p className="text-gray-600 mt-1">
             {isConnected
-              ? `Manage orders from ${shopData?.name} • ${orders.length} total orders`
+              ? `Manage orders from ${shopData?.name} • ${
+                  filteredOrders.length
+                } orders ${
+                  filteredOrders.length !== orders.length
+                    ? `(filtered from ${orders.length})`
+                    : ""
+                }`
               : "Track and manage all customer orders"}
           </p>
         </div>
@@ -464,13 +474,10 @@ const Orders = () => {
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredOrders.map((order) => (
+              {paginatedOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
@@ -495,7 +502,7 @@ const Orders = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      ${order.amount.toFixed(2)}
+                      {formatCurrencyWithShop(order.amount, shopData)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -528,16 +535,6 @@ const Orders = () => {
                       {formatDate(order.orderDate)}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div className="flex items-center space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -545,27 +542,11 @@ const Orders = () => {
         </div>
 
         {/* Pagination */}
-        <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Showing <span className="font-medium">1</span> to{" "}
-            <span className="font-medium">5</span> of{" "}
-            <span className="font-medium">1,247</span> results
-          </div>
-          <div className="flex space-x-2">
-            <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              Previous
-            </button>
-            <button className="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
-              1
-            </button>
-            <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              2
-            </button>
-            <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              Next
-            </button>
-          </div>
-        </div>
+        <PaginationControls
+          pagination={paginationData.pagination}
+          onPageChange={paginationData.setCurrentPage}
+          onPageSizeChange={paginationData.setPageSize}
+        />
       </div>
     </div>
   );

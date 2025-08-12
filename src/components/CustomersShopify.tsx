@@ -1,10 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Search,
   Filter,
-  Download,
-  Eye,
-  MoreHorizontal,
   Users,
   Mail,
   Phone,
@@ -17,16 +14,54 @@ import {
 import { useShopifyCustomers, useShopifyData } from "../hooks/useShopifyData";
 import { useShopify } from "../contexts/ShopifyContext";
 import { formatCurrency as formatCurrencyUtil } from "../utils/currency";
+import { usePagination } from "../hooks/usePagination";
+import { PaginationControls } from "../utils/pagination.tsx";
 
 const CustomersShopify = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("created_at");
   const { customers, loading, error } = useShopifyCustomers();
   const { data: shopData } = useShopifyData();
-  const { isConnected, shopData: contextShopData } = useShopify();
+  const { isConnected } = useShopify();
 
   // Get shop currency or fallback to USD
   const shopCurrency = shopData?.shop?.currency || "USD";
+
+  // Filter and sort customers
+  const filteredCustomers = customers.filter((customer) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      customer.first_name?.toLowerCase().includes(searchLower) ||
+      customer.last_name?.toLowerCase().includes(searchLower) ||
+      customer.email?.toLowerCase().includes(searchLower) ||
+      customer.phone?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Apply sorting to filtered customers
+  const sortedCustomers = [...filteredCustomers].sort((a, b) => {
+    switch (sortBy) {
+      case "created_at":
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      case "total_spent":
+        return parseFloat(b.total_spent) - parseFloat(a.total_spent);
+      case "orders_count":
+        return b.orders_count - a.orders_count;
+      case "last_name": {
+        const aLastName = a.last_name || a.email;
+        const bLastName = b.last_name || b.email;
+        return aLastName.localeCompare(bLastName);
+      }
+      default:
+        return 0;
+    }
+  });
+
+  // Add pagination
+  const paginationData = usePagination(sortedCustomers, 10);
+  const paginatedCustomers = paginationData.items;
 
   if (!isConnected) {
     return (
@@ -79,37 +114,6 @@ const CustomersShopify = () => {
       </div>
     );
   }
-
-  const filteredCustomers = customers.filter((customer) => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      customer.first_name?.toLowerCase().includes(searchLower) ||
-      customer.last_name?.toLowerCase().includes(searchLower) ||
-      customer.email?.toLowerCase().includes(searchLower) ||
-      customer.phone?.toLowerCase().includes(searchLower)
-    );
-  });
-
-  // Apply sorting to filtered customers
-  const sortedCustomers = [...filteredCustomers].sort((a, b) => {
-    switch (sortBy) {
-      case "created_at":
-        return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      case "total_spent":
-        return parseFloat(b.total_spent) - parseFloat(a.total_spent);
-      case "orders_count":
-        return b.orders_count - a.orders_count;
-      case "last_name": {
-        const aLastName = a.last_name || a.email;
-        const bLastName = b.last_name || b.email;
-        return aLastName.localeCompare(bLastName);
-      }
-      default:
-        return 0;
-    }
-  });
 
   const getTierFromSpent = (totalSpent: string) => {
     const spent = parseFloat(totalSpent);
@@ -276,7 +280,7 @@ const CustomersShopify = () => {
 
       {/* Customers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sortedCustomers.map((customer) => {
+        {paginatedCustomers.map((customer) => {
           const tier = getTierFromSpent(customer.total_spent);
           return (
             <div
@@ -370,25 +374,11 @@ const CustomersShopify = () => {
       </div>
 
       {/* Pagination */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Showing {Math.min(sortedCustomers.length, 50)} of{" "}
-            {sortedCustomers.length} customers
-          </div>
-          <div className="flex space-x-2">
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50">
-              Previous
-            </button>
-            <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-              1
-            </button>
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50">
-              Next
-            </button>
-          </div>
-        </div>
-      </div>
+      <PaginationControls
+        pagination={paginationData.pagination}
+        onPageChange={paginationData.setCurrentPage}
+        onPageSizeChange={paginationData.setPageSize}
+      />
     </div>
   );
 };

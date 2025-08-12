@@ -1,13 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Search,
   Filter,
   Plus,
-  Eye,
-  Edit,
   Mail,
   Phone,
-  MapPin,
   Star,
   ShoppingBag,
   Calendar,
@@ -15,8 +12,9 @@ import {
   TrendingUp,
   Users,
   DollarSign,
-  MoreHorizontal,
 } from "lucide-react";
+import { usePagination } from "../hooks/usePagination";
+import { PaginationControls } from "../utils/pagination.tsx";
 
 const Customers = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -202,6 +200,10 @@ const Customers = () => {
     }
   });
 
+  // Add pagination
+  const paginationData = usePagination(sortedCustomers, 10);
+  const paginatedCustomers = paginationData.items;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -211,7 +213,11 @@ const Customers = () => {
             Customer Management
           </h1>
           <p className="text-gray-600 mt-1">
-            Manage customer relationships and loyalty programs
+            Manage customer relationships and loyalty programs •{" "}
+            {sortedCustomers.length} customers{" "}
+            {sortedCustomers.length !== customers.length
+              ? `(filtered from ${customers.length})`
+              : ""}
           </p>
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3">
@@ -395,13 +401,10 @@ const Customers = () => {
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Last Purchase
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {sortedCustomers.map((customer) => (
+              {paginatedCustomers.map((customer) => (
                 <tr key={customer.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -464,19 +467,6 @@ const Customers = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatDate(customer.lastPurchase)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div className="flex items-center space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -484,27 +474,11 @@ const Customers = () => {
         </div>
 
         {/* Pagination */}
-        <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Showing <span className="font-medium">1</span> to{" "}
-            <span className="font-medium">5</span> of{" "}
-            <span className="font-medium">34,892</span> results
-          </div>
-          <div className="flex space-x-2">
-            <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              Previous
-            </button>
-            <button className="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
-              1
-            </button>
-            <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              2
-            </button>
-            <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              Next
-            </button>
-          </div>
-        </div>
+        <PaginationControls
+          pagination={paginationData.pagination}
+          onPageChange={paginationData.setCurrentPage}
+          onPageSizeChange={paginationData.setPageSize}
+        />
       </div>
     </div>
   );

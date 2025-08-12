@@ -1,26 +1,24 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Search,
   Filter,
   Truck,
   Package,
-  MapPin,
   Clock,
   CheckCircle,
   AlertTriangle,
   Navigation,
   Calendar,
-  Eye,
-  MoreHorizontal,
 } from "lucide-react";
 import { useShopifyFulfillment } from "../hooks/useShopifyData";
 import { useShopify } from "../contexts/ShopifyContext";
+import { usePagination } from "../hooks/usePagination";
+import { PaginationControls } from "../utils/pagination.tsx";
 
 const Fulfillment = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
-  const [selectedCarrier, setSelectedCarrier] = useState("");
   const [selectedOrigin, setSelectedOrigin] = useState("");
 
   // Use Shopify data if connected, otherwise use placeholder data
@@ -147,6 +145,34 @@ const Fulfillment = () => {
       ? fulfillmentData.fulfillmentCenters
       : placeholderFulfillmentCenters;
 
+  // Apply filtering
+  const filteredShipments = shipments.filter((shipment: any) => {
+    // Search filter with null safety
+    const matchesSearch =
+      (shipment.id?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (shipment.orderId?.toLowerCase() || "").includes(
+        searchTerm.toLowerCase()
+      ) ||
+      (shipment.customer?.toLowerCase() || "").includes(
+        searchTerm.toLowerCase()
+      ) ||
+      (shipment.trackingNumber?.toLowerCase() || "").includes(
+        searchTerm.toLowerCase()
+      );
+
+    // Status filter
+    const matchesStatus = !selectedStatus || shipment.status === selectedStatus;
+
+    // Origin filter
+    const matchesOrigin = !selectedOrigin || shipment.origin === selectedOrigin;
+
+    return matchesSearch && matchesStatus && matchesOrigin;
+  });
+
+  // Add pagination for filtered data
+  const paginationData = usePagination(filteredShipments, 10);
+  const paginatedShipments = paginationData.items;
+
   // Show loading state when connected and fetching data
   if (isConnected && loading) {
     return (
@@ -234,33 +260,6 @@ const Fulfillment = () => {
     });
   };
 
-  const filteredShipments = shipments.filter((shipment: any) => {
-    // Search filter with null safety
-    const matchesSearch =
-      (shipment.id?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (shipment.orderId?.toLowerCase() || "").includes(
-        searchTerm.toLowerCase()
-      ) ||
-      (shipment.customer?.toLowerCase() || "").includes(
-        searchTerm.toLowerCase()
-      ) ||
-      (shipment.trackingNumber?.toLowerCase() || "").includes(
-        searchTerm.toLowerCase()
-      );
-
-    // Status filter
-    const matchesStatus = !selectedStatus || shipment.status === selectedStatus;
-
-    // Carrier filter
-    const matchesCarrier =
-      !selectedCarrier || shipment.carrier === selectedCarrier;
-
-    // Origin filter
-    const matchesOrigin = !selectedOrigin || shipment.origin === selectedOrigin;
-
-    return matchesSearch && matchesStatus && matchesCarrier && matchesOrigin;
-  });
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -271,7 +270,13 @@ const Fulfillment = () => {
           </h1>
           <p className="text-gray-600 mt-1">
             {isConnected
-              ? `Manage shipments from ${shopData?.name} • ${shipments.length} total shipments`
+              ? `Manage shipments from ${shopData?.name} • ${
+                  filteredShipments.length
+                } shipments ${
+                  filteredShipments.length !== shipments.length
+                    ? `(filtered from ${shipments.length})`
+                    : ""
+                }`
               : "Manage shipments and fulfillment centers"}
           </p>
         </div>
@@ -384,17 +389,6 @@ const Fulfillment = () => {
               </select>
               <select
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={selectedCarrier}
-                onChange={(e) => setSelectedCarrier(e.target.value)}
-              >
-                <option value="">All Carriers</option>
-                <option value="FedEx">FedEx</option>
-                <option value="UPS">UPS</option>
-                <option value="DHL">DHL</option>
-                <option value="USPS">USPS</option>
-              </select>
-              <select
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={selectedOrigin}
                 onChange={(e) => setSelectedOrigin(e.target.value)}
               >
@@ -408,7 +402,6 @@ const Fulfillment = () => {
                 <button
                   onClick={() => {
                     setSelectedStatus("");
-                    setSelectedCarrier("");
                     setSelectedOrigin("");
                   }}
                   className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
@@ -440,9 +433,6 @@ const Fulfillment = () => {
                   Route
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Carrier
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -451,13 +441,10 @@ const Fulfillment = () => {
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Cost
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredShipments.map((shipment: any) => (
+              {paginatedShipments.map((shipment: any) => (
                 <tr key={shipment.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
@@ -495,9 +482,6 @@ const Fulfillment = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {shipment.carrier}
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
@@ -527,16 +511,6 @@ const Fulfillment = () => {
                       ? shipment.cost.toFixed(2)
                       : shipment.cost}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div className="flex items-center space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -544,24 +518,11 @@ const Fulfillment = () => {
         </div>
 
         {/* Pagination */}
-        <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Showing <span className="font-medium">1</span> to{" "}
-            <span className="font-medium">{filteredShipments.length}</span> of{" "}
-            <span className="font-medium">{shipments.length}</span> results
-          </div>
-          <div className="flex space-x-2">
-            <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              Previous
-            </button>
-            <button className="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
-              1
-            </button>
-            <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              Next
-            </button>
-          </div>
-        </div>
+        <PaginationControls
+          pagination={paginationData.pagination}
+          onPageChange={paginationData.setCurrentPage}
+          onPageSizeChange={paginationData.setPageSize}
+        />
       </div>
     </div>
   );

@@ -1,18 +1,15 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Package,
-  Plus,
-  Upload,
-  Download,
   Search,
   Filter,
   TrendingUp,
   TrendingDown,
-  Edit2,
-  Trash2,
 } from "lucide-react";
 import { useShopifyProducts, useShopifyData } from "../hooks/useShopifyData";
-import { formatCurrency } from "../utils/currency";
+import { formatCurrencyWithShop } from "../utils/currency";
+import { usePagination } from "../hooks/usePagination";
+import { PaginationControls } from "../utils/pagination.tsx";
 
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,8 +20,54 @@ const Inventory = () => {
   const { products, loading, error } = useShopifyProducts();
   const { data: shopData } = useShopifyData();
 
-  // Get shop currency or fallback to USD
-  const shopCurrency = shopData?.shop?.currency || "USD";
+  // Get shop data for currency formatting
+  const currentShop = shopData?.shop;
+
+  // Filter products
+  const filteredItems = products.filter((product) => {
+    // Search filter
+    const matchesSearch =
+      product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.id.toString().includes(searchTerm) ||
+      product.product_type.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Category filter
+    const matchesCategory =
+      !selectedCategory || product.product_type === selectedCategory;
+
+    // Vendor filter
+    const matchesVendor = !selectedVendor || product.vendor === selectedVendor;
+
+    // Status filter
+    const matchesStatus =
+      !selectedStatus ||
+      (() => {
+        const totalStock = product.variants.reduce(
+          (sum, v) => sum + v.inventory_quantity,
+          0
+        );
+        switch (selectedStatus) {
+          case "in-stock":
+            return totalStock > 10;
+          case "low-stock":
+            return totalStock > 0 && totalStock <= 10;
+          case "out-of-stock":
+            return totalStock === 0;
+          default:
+            return true;
+        }
+      })();
+
+    return matchesSearch && matchesCategory && matchesVendor && matchesStatus;
+  });
+
+  // Use pagination for filtered items
+  const {
+    items: paginatedProducts,
+    pagination,
+    setCurrentPage,
+    setPageSize,
+  } = usePagination(filteredItems, 25);
 
   if (loading) {
     return (
@@ -84,37 +127,6 @@ const Inventory = () => {
     return { icon: TrendingUp, color: "text-green-500" };
   };
 
-  const filteredItems = products.filter((product) => {
-    // Search filter
-    const matchesSearch =
-      product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.id.toString().includes(searchTerm) ||
-      product.product_type.toLowerCase().includes(searchTerm.toLowerCase());
-
-    // Category filter
-    const matchesCategory =
-      !selectedCategory || product.product_type === selectedCategory;
-
-    // Vendor filter
-    const matchesVendor = !selectedVendor || product.vendor === selectedVendor;
-
-    // Status filter
-    const totalStock = product.variants.reduce(
-      (sum, variant) => sum + variant.inventory_quantity,
-      0
-    );
-    let matchesStatus = true;
-    if (selectedStatus === "in-stock") {
-      matchesStatus = totalStock > 10;
-    } else if (selectedStatus === "low-stock") {
-      matchesStatus = totalStock > 0 && totalStock <= 10;
-    } else if (selectedStatus === "out-of-stock") {
-      matchesStatus = totalStock === 0;
-    }
-
-    return matchesSearch && matchesCategory && matchesVendor && matchesStatus;
-  });
-
   const totalProducts = products.length;
   const inStockProducts = products.filter((p) =>
     p.variants.some((v) => v.inventory_quantity > 0)
@@ -127,17 +139,6 @@ const Inventory = () => {
   const outOfStockProducts = products.filter((p) =>
     p.variants.every((v) => v.inventory_quantity === 0)
   ).length;
-
-  const totalValue = products.reduce((sum, product) => {
-    return (
-      sum +
-      product.variants.reduce((variantSum, variant) => {
-        return (
-          variantSum + parseFloat(variant.price) * variant.inventory_quantity
-        );
-      }, 0)
-    );
-  }, 0);
 
   return (
     <div className="space-y-6">
@@ -337,13 +338,10 @@ const Inventory = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredItems.map((product) => {
+              {paginatedProducts.map((product) => {
                 const mainVariant = product.variants[0];
                 const totalStock = product.variants.reduce(
                   (sum, v) => sum + v.inventory_quantity,
@@ -397,9 +395,9 @@ const Inventory = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(
-                        parseFloat(mainVariant.price),
-                        shopCurrency
+                      {formatCurrencyWithShop(
+                        mainVariant.price || "0",
+                        currentShop
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -411,23 +409,13 @@ const Inventory = () => {
                         {getStatusText(totalStock)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        <button className="text-blue-600 hover:text-blue-700">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button className="text-red-600 hover:text-red-700">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
                   </tr>
                 );
               })}
-              {filteredItems.length === 0 && (
+              {paginatedProducts.length === 0 && (
                 <tr key="no-products">
                   <td
-                    colSpan={7}
+                    colSpan={6}
                     className="px-6 py-4 text-center text-gray-500"
                   >
                     No products found
@@ -439,23 +427,12 @@ const Inventory = () => {
         </div>
 
         {/* Pagination */}
-        <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Showing 1 to {Math.min(filteredItems.length, 50)} of{" "}
-            {filteredItems.length} results
-          </div>
-          <div className="flex space-x-2">
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50">
-              Previous
-            </button>
-            <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-              1
-            </button>
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50">
-              Next
-            </button>
-          </div>
-        </div>
+        <PaginationControls
+          pagination={pagination}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          className="bg-white px-6 py-4 border-t border-gray-200"
+        />
       </div>
     </div>
   );
