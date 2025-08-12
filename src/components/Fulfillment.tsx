@@ -478,10 +478,14 @@ const Fulfillment = () => {
                       </div>
                       <div className="flex items-center text-xs text-gray-500">
                         <Navigation className="w-3 h-3 mr-1" />
-                        {shipment.destination.split(",")[0]}
+                        {shipment.destination.split(",")[0].length > 20
+                          ? shipment.destination.split(",")[0].slice(0, 50) +
+                            "…"
+                          : shipment.destination.split(",")[0]}
                       </div>
                     </div>
                   </td>
+
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(

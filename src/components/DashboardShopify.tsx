@@ -278,7 +278,9 @@ const Dashboard = () => {
               >
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {item.name}
+                    {item.name.length > 30
+                      ? item.name.slice(0, 25) + "…"
+                      : item.name}
                   </p>
                   <p className="text-xs text-gray-500">{item.location}</p>
                 </div>
