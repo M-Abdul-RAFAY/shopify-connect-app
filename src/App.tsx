@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -8,16 +8,14 @@ import {
   Truck,
   BarChart3,
   Settings,
-  Bell,
-  Search,
   User,
-  ChevronDown,
   Menu,
   X,
   LogOut,
   RefreshCw,
 } from "lucide-react";
 import { ShopifyProvider, useShopify } from "./contexts/ShopifyContext";
+import { DataProvider, useData } from "./contexts/DataContext";
 import { NavigationProvider } from "./contexts/NavigationContext";
 import Dashboard from "./components/Dashboard";
 import DashboardShopify from "./components/DashboardShopify";
@@ -30,6 +28,7 @@ import Fulfillment from "./components/Fulfillment";
 import Analytics from "./components/Analytics";
 import ShopifyConnect from "./components/ShopifyConnect";
 import AuthCallback from "./components/AuthCallback";
+import LoadingProgress from "./components/LoadingProgress";
 
 type Module =
   | "dashboard"
@@ -53,14 +52,24 @@ const navigation = [
 const MainApp: React.FC = () => {
   const [activeModule, setActiveModule] = useState<Module>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isConnected, isLoading, shopData, disconnectShop, refreshShopData } =
-    useShopify();
+  const { isConnected, isLoading, shopData, disconnectShop } = useShopify();
+  const { loading, hasData, fetchAllData, refreshData } = useData();
+
+  // Auto-fetch data when connected
+  useEffect(() => {
+    if (isConnected && !hasData && !loading.isLoading) {
+      console.log("Auto-fetching data on connection...");
+      fetchAllData();
+    }
+  }, [isConnected, hasData, loading.isLoading, fetchAllData]);
 
   // Debug logging
   console.log("MainApp - Current state:", {
     isConnected,
     isLoading,
     hasShopData: !!shopData,
+    hasData,
+    loadingData: loading.isLoading,
   });
 
   // Show connection screen if not connected
@@ -71,12 +80,37 @@ const MainApp: React.FC = () => {
 
   // Show loading screen while checking connection
   if (isLoading) {
-    console.log("MainApp - Showing loading screen");
+    console.log("MainApp - Showing connection loading screen");
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your store data...</p>
+          <p className="text-gray-600">Connecting to your store...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show data loading progress
+  if (isConnected && loading.isLoading) {
+    console.log("MainApp - Showing data loading progress");
+    return (
+      <LoadingProgress
+        stage={loading.stage}
+        progress={loading.progress}
+        details={loading.details}
+      />
+    );
+  }
+
+  // Show loading if connected but no data yet
+  if (isConnected && !hasData) {
+    console.log("MainApp - Waiting for data...");
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Preparing your data...</p>
         </div>
       </div>
     );
@@ -190,7 +224,7 @@ const MainApp: React.FC = () => {
           <div className="p-4 border-t border-gray-200">
             <div className="space-y-2">
               <button
-                onClick={refreshShopData}
+                onClick={refreshData}
                 className="w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <RefreshCw className="w-4 h-4 mr-3" />
@@ -252,12 +286,14 @@ const MainApp: React.FC = () => {
 function App() {
   return (
     <ShopifyProvider>
-      <Router>
-        <Routes>
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/*" element={<MainApp />} />
-        </Routes>
-      </Router>
+      <DataProvider>
+        <Router>
+          <Routes>
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/*" element={<MainApp />} />
+          </Routes>
+        </Router>
+      </DataProvider>
     </ShopifyProvider>
   );
 }

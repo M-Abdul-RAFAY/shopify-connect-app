@@ -6,6 +6,7 @@ import {
   ShopifyCustomer,
   ShopifyStore,
 } from "../services/shopifyAPI";
+import cachedDataService from "../services/cachedDataService";
 import { useShopify } from "../contexts/ShopifyContext";
 
 interface AnalyticsData {
@@ -18,6 +19,74 @@ interface AnalyticsData {
   ordersByStatus: { [key: string]: number };
   revenueByMonth: { [key: string]: number };
 }
+
+// Calculate analytics from fetched data
+const calculateAnalyticsFromData = (
+  products: ShopifyProduct[],
+  orders: ShopifyOrder[],
+  customers: ShopifyCustomer[]
+): AnalyticsData => {
+  // Calculate total revenue from orders
+  const totalRevenue = orders.reduce((sum, order) => {
+    const amount = parseFloat(order.total_price || "0");
+    return sum + amount;
+  }, 0);
+
+  // Calculate orders by status
+  const ordersByStatus = orders.reduce((acc, order) => {
+    const status = order.fulfillment_status || "unfulfilled";
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {} as { [key: string]: number });
+
+  // Get recent orders (last 10)
+  const recentOrders = orders
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 10);
+
+  // Calculate revenue by month
+  const revenueByMonth = orders.reduce((acc, order) => {
+    const date = new Date(order.created_at);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const amount = parseFloat(order.total_price || "0");
+    acc[monthKey] = (acc[monthKey] || 0) + amount;
+    return acc;
+  }, {} as { [key: string]: number });
+
+  // Calculate top products (simplified - based on line items)
+  const productSales: { [key: string]: { name: string; sales: number; revenue: number } } = {};
+  
+  orders.forEach(order => {
+    order.line_items?.forEach(item => {
+      const productName = item.title || "Unknown Product";
+      const quantity = item.quantity || 0;
+      const price = parseFloat(item.price || "0");
+      const revenue = quantity * price;
+      
+      if (!productSales[productName]) {
+        productSales[productName] = { name: productName, sales: 0, revenue: 0 };
+      }
+      
+      productSales[productName].sales += quantity;
+      productSales[productName].revenue += revenue;
+    });
+  });
+
+  const topProducts = Object.values(productSales)
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
+
+  return {
+    totalRevenue,
+    totalOrders: orders.length,
+    averageOrderValue: orders.length > 0 ? totalRevenue / orders.length : 0,
+    totalProducts: products.length,
+    recentOrders,
+    topProducts,
+    ordersByStatus,
+    revenueByMonth,
+  };
+};
 
 export const useShopifyData = () => {
   const { isConnected } = useShopify();
@@ -38,23 +107,41 @@ export const useShopifyData = () => {
     setError(null);
 
     try {
-      console.log("Starting to fetch all Shopify data...");
+      console.log("Starting to fetch all Shopify data using MongoDB cache...");
 
-      const [productsRes, ordersRes, customersRes, shopRes, analyticsRes] =
+      // Get shop info first to determine shop domain
+      const shopRes = await shopifyAPI.getShop();
+      const shopDomain = shopRes.shop?.myshopify_domain || "";
+      const accessToken = shopifyAPI.getAccessToken();
+      
+      console.log("Shop domain:", shopDomain);
+      console.log("Access token available:", !!accessToken);
+
+      // Use cached data service that automatically falls back to API if cache unavailable
+      const [productsRes, ordersRes, customersRes] =
         await Promise.all([
-          shopifyAPI.getProducts(250), // Use Shopify's maximum limit
-          shopifyAPI.getOrders(250), // Use Shopify's maximum limit
-          shopifyAPI.getCustomers(250), // Use Shopify's maximum limit
-          shopifyAPI.getShop(),
-          shopifyAPI.getAnalytics(),
+          cachedDataService.getProducts(shopDomain, accessToken || undefined, { limit: 5000 }), // Get more products
+          cachedDataService.getOrders(shopDomain, accessToken || undefined, { limit: 5000 }), // Get more orders
+          cachedDataService.getCustomers(shopDomain, accessToken || undefined, { limit: 5000 }), // Get more customers
         ]);
+
+      // Calculate analytics from the fetched data
+      const calculatedAnalytics = calculateAnalyticsFromData(
+        productsRes.products || [],
+        ordersRes.orders || [],
+        customersRes.customers || []
+      );
 
       console.log("All Shopify data fetched successfully:", {
         products: productsRes.products?.length || 0,
         orders: ordersRes.orders?.length || 0,
         customers: customersRes.customers?.length || 0,
         shop: shopRes.shop?.name || "unknown",
-        analytics: analyticsRes ? "available" : "unavailable",
+        analytics: calculatedAnalytics ? "calculated" : "unavailable",
+        source: `${productsRes.source || 'api'}_${ordersRes.source || 'api'}_${customersRes.source || 'api'}`,
+        totalProducts: productsRes.pagination?.total_count || 0,
+        totalOrders: ordersRes.pagination?.total_count || 0,
+        totalCustomers: customersRes.pagination?.total_count || 0,
       });
 
       setData({
@@ -62,7 +149,7 @@ export const useShopifyData = () => {
         orders: ordersRes.orders,
         customers: customersRes.customers,
         shop: shopRes.shop,
-        analytics: analyticsRes,
+        analytics: calculatedAnalytics,
       });
     } catch (err) {
       console.error("Detailed error in useShopifyData:", err);
@@ -95,7 +182,14 @@ export const useShopifyProducts = () => {
     setError(null);
 
     try {
-      const response = await shopifyAPI.getProducts(100);
+      // Get shop domain
+      const shopRes = await shopifyAPI.getShop();
+      const shopDomain = shopRes.shop?.myshopify_domain || "";
+      const accessToken = shopifyAPI.getAccessToken();
+      
+      // Use cached data service for unlimited products
+      const response = await cachedDataService.getProducts(shopDomain, accessToken || undefined, { limit: 5000 });
+      console.log(`Fetched ${response.products.length} products from ${response.source} (total available: ${response.pagination?.total_count || 'unknown'})`);
       setProducts(response.products);
     } catch (err) {
       setError("Failed to fetch products");
@@ -127,7 +221,14 @@ export const useShopifyOrders = () => {
     setError(null);
 
     try {
-      const response = await shopifyAPI.getOrders(100);
+      // Get shop domain
+      const shopRes = await shopifyAPI.getShop();
+      const shopDomain = shopRes.shop?.myshopify_domain || "";
+      const accessToken = shopifyAPI.getAccessToken();
+      
+      // Use cached data service for unlimited orders
+      const response = await cachedDataService.getOrders(shopDomain, accessToken || undefined, { limit: 5000 });
+      console.log(`Fetched ${response.orders.length} orders from ${response.source} (total available: ${response.pagination?.total_count || 'unknown'})`);
       setOrders(response.orders);
     } catch (err) {
       setError("Failed to fetch orders");
@@ -159,7 +260,14 @@ export const useShopifyCustomers = () => {
     setError(null);
 
     try {
-      const response = await shopifyAPI.getCustomers(100);
+      // Get shop domain
+      const shopRes = await shopifyAPI.getShop();
+      const shopDomain = shopRes.shop?.myshopify_domain || "";
+      const accessToken = shopifyAPI.getAccessToken();
+      
+      // Use cached data service for unlimited customers
+      const response = await cachedDataService.getCustomers(shopDomain, accessToken || undefined, { limit: 5000 });
+      console.log(`Fetched ${response.customers.length} customers from ${response.source} (total available: ${response.pagination?.total_count || 'unknown'})`);
       setCustomers(response.customers);
     } catch (err) {
       setError("Failed to fetch customers");

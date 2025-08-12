@@ -293,6 +293,14 @@ class ShopifyAPI {
     return !!(this.accessToken && this.shop);
   }
 
+  getAccessToken(): string | null {
+    return this.accessToken;
+  }
+
+  getShopDomain(): string | null {
+    return this.shop;
+  }
+
   getAuthUrl(): string {
     const scopes =
       import.meta.env.VITE_SHOPIFY_SCOPES ||

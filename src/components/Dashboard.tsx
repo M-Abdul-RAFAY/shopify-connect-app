@@ -1,4 +1,3 @@
-import React from "react";
 import {
   DollarSign,
   ShoppingCart,
@@ -9,14 +8,14 @@ import {
   AlertTriangle,
   Star,
 } from "lucide-react";
-import { useShopifyData } from "../hooks/useShopifyData";
+import { useData } from "../contexts/DataContext";
 import { useNavigation } from "../contexts/NavigationContext";
 
 const Dashboard = () => {
-  const { data, loading, error } = useShopifyData();
+  const { data, loading, error } = useData();
   const { setActiveModule } = useNavigation();
 
-  if (loading) {
+  if (loading.isLoading) {
     return (
       <div className="space-y-6">
         <div>

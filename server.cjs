@@ -3,8 +3,35 @@ const cors = require("cors");
 const axios = require("axios");
 require("dotenv").config();
 
+// MongoDB integration
+const dbConnection = require("./config/database.cjs");
+const syncService = require("./services/syncService.cjs");
+const cachedDataRoutes = require("./routes/cachedDataRoutes.cjs");
+const { Shop } = require("./models/shopifyModels.cjs");
+
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Connect to MongoDB on startup
+async function initializeServer() {
+  try {
+    console.log("🔗 Connecting to MongoDB...");
+    await dbConnection.connect(
+      process.env.MONGODB_URI || "mongodb://localhost:27017/shopify-app"
+    );
+
+    console.log("📊 Starting Shopify sync service...");
+    syncService.startScheduledSync();
+
+    console.log("✅ Server initialization complete");
+  } catch (error) {
+    console.error("❌ Server initialization failed:", error);
+    console.log("⚠️  Continuing without MongoDB - using direct API calls");
+  }
+}
+
+// Initialize server
+initializeServer();
 
 // Middleware
 app.use(
@@ -23,6 +50,25 @@ app.use(
   })
 );
 app.use(express.json());
+
+// MongoDB cached data routes
+app.use("/api/cached", cachedDataRoutes);
+
+// MongoDB health check endpoint
+app.get("/api/db-health", async (req, res) => {
+  try {
+    const healthStatus = await dbConnection.healthCheck();
+    res.json({
+      database: healthStatus,
+      server: { status: "OK", message: "Shopify backend server is running" },
+    });
+  } catch (error) {
+    res.status(500).json({
+      database: { status: "error", message: error.message },
+      server: { status: "OK", message: "Shopify backend server is running" },
+    });
+  }
+});
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -87,6 +133,85 @@ app.post("/api/shopify/exchange-token", async (req, res) => {
 
     res.status(500).json({
       error: "Token exchange failed",
+      details: error.response?.data || error.message,
+    });
+  }
+});
+
+// Store shop information in MongoDB after successful token exchange
+app.post("/api/shopify/store-shop", async (req, res) => {
+  try {
+    const { shop, accessToken } = req.body;
+
+    if (!shop || !accessToken) {
+      return res.status(400).json({
+        error: "Missing required parameters: shop and accessToken",
+      });
+    }
+
+    // Get shop information from Shopify
+    let fullShopDomain = shop;
+    if (!shop.includes(".myshopify.com")) {
+      fullShopDomain = `${shop}.myshopify.com`;
+    }
+
+    const shopUrl = `https://${fullShopDomain}/admin/api/2024-07/shop.json`;
+    const response = await axios({
+      method: "GET",
+      url: shopUrl,
+      headers: {
+        "X-Shopify-Access-Token": accessToken,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const shopData = response.data.shop;
+
+    // Store shop in MongoDB
+    try {
+      await Shop.findOneAndUpdate(
+        { domain: fullShopDomain },
+        {
+          shopId: shopData.id,
+          domain: fullShopDomain,
+          name: shopData.name,
+          email: shopData.email,
+          currency: shopData.currency,
+          country: shopData.country,
+          province: shopData.province,
+          address1: shopData.address1,
+          city: shopData.city,
+          zip: shopData.zip,
+          phone: shopData.phone,
+          money_format: shopData.money_format,
+          money_with_currency_format: shopData.money_with_currency_format,
+          plan_name: shopData.plan_name,
+          enabled_presentment_currencies:
+            shopData.enabled_presentment_currencies,
+          lastUpdated: new Date(),
+        },
+        { upsert: true, new: true }
+      );
+
+      console.log(`Shop ${fullShopDomain} stored in MongoDB`);
+
+      // Trigger initial sync for this shop
+      console.log(`Starting initial sync for ${fullShopDomain}`);
+      syncService.forceSyncShop(fullShopDomain, "all", accessToken);
+    } catch (dbError) {
+      console.error("Error storing shop in MongoDB:", dbError);
+      // Continue without MongoDB storage
+    }
+
+    res.json({
+      success: true,
+      message: "Shop information stored and sync initiated",
+      shop: shopData,
+    });
+  } catch (error) {
+    console.error("Error storing shop:", error.message);
+    res.status(500).json({
+      error: "Failed to store shop information",
       details: error.response?.data || error.message,
     });
   }
