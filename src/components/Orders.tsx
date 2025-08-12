@@ -18,6 +18,7 @@ import { useShopify } from "../contexts/ShopifyContext";
 import { formatCurrencyWithShop } from "../utils/currency";
 import { usePagination } from "../hooks/usePagination";
 import { PaginationControls } from "../utils/pagination.tsx";
+import { TrackingStatus, QuickTrackingLookup } from "./TrackingWidgets";
 
 const Orders = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -296,6 +297,9 @@ const Orders = () => {
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3"></div>
       </div>
+
+      {/* Quick Tracking Lookup */}
+      <QuickTrackingLookup />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

@@ -13,6 +13,7 @@ import { useShopifyData } from "../hooks/useShopifyData";
 import { useNavigation } from "../contexts/NavigationContext";
 import { useShopify } from "../contexts/ShopifyContext";
 import { formatCurrencyWithShop } from "../utils/currency";
+import { QuickTrackingLookup } from "./TrackingWidgets";
 
 const Dashboard = () => {
   const { data, loading, error } = useShopifyData();
@@ -428,6 +429,14 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Order Tracking Section */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Order Tracking
+        </h2>
+        <QuickTrackingLookup />
       </div>
     </div>
   );

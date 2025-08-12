@@ -7,6 +7,7 @@ type Module =
   | "customers"
   | "fulfillment"
   | "analytics"
+  | "oms"
   | "settings";
 
 interface NavigationContextType {
