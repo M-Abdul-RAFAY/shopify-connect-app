@@ -124,7 +124,7 @@ const calculateAnalyticsFromData = (
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { isConnected } = useShopify();
+  const { isConnected, shopData } = useShopify();
 
   const [data, setData] = useState<ShopifyData>({
     products: [],
@@ -149,7 +149,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const fetchAllData = useCallback(async () => {
-    if (!isConnected) return;
+    if (!isConnected || !shopData) return;
 
     setLoading({
       isLoading: true,
@@ -160,18 +160,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
     setError(null);
 
     try {
-      // Step 1: Get shop info
-      updateProgress("Shop Info", 10, "Fetching shop information...");
-      const shopRes = await shopifyAPI.getShop();
-      const shopDomain = shopRes.shop?.myshopify_domain || "";
+      // Step 1: Use existing shop data - no API call needed!
+      updateProgress("Shop Info", 10, "Using cached shop information...");
+      const shopDomain = shopData.myshopify_domain || "";
       const accessToken = shopifyAPI.getAccessToken();
 
       if (!shopDomain) {
-        throw new Error("Unable to get shop domain");
+        throw new Error("Unable to get shop domain from cached data");
       }
 
-      // Step 2: Fetch products
-      updateProgress("Products", 25, "Loading all products...");
+      console.log(
+        "📋 Using cached shop domain:",
+        shopDomain,
+        "- No API call needed!"
+      );
+
+      // Step 2: Fetch products from MongoDB only
+      updateProgress("Products", 25, "Loading all products from cache...");
       const productsRes = await cachedDataService.getProducts(
         shopDomain,
         accessToken || undefined,
@@ -209,7 +214,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         products: productsRes.products || [],
         orders: ordersRes.orders || [],
         customers: customersRes.customers || [],
-        shop: shopRes.shop,
+        shop: shopData, // Use shopData from context instead of API call
         analytics: calculatedAnalytics,
       };
 
@@ -231,7 +236,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       setLoading({ isLoading: false, stage: "", progress: 0, details: "" });
     }
-  }, [isConnected]);
+  }, [isConnected, shopData]);
 
   const refreshData = useCallback(async () => {
     setHasData(false); // Reset data state to show loading
