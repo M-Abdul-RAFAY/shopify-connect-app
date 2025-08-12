@@ -253,9 +253,9 @@ const Customers = () => {
             </div>
             <div className="ml-4">
               <h3 className="text-2xl font-bold text-gray-900">
-                {customers.length > 0 ? 
-                  `${Math.round(85 + (customers.length % 15))}%` : 
-                  "N/A"}
+                {customers.length > 0
+                  ? `${Math.round(85 + (customers.length % 15))}%`
+                  : "N/A"}
               </h3>
               <p className="text-gray-600 text-sm">Estimated Retention</p>
             </div>

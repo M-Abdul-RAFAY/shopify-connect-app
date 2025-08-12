@@ -363,9 +363,9 @@ const Dashboard = () => {
           </div>
           <div className="mt-4">
             <div className="text-3xl font-bold text-gray-900">
-              {analytics?.totalOrders && analytics.totalOrders > 0 ? 
-                (4.0 + (analytics.totalOrders % 11) / 10).toFixed(1) : 
-                "N/A"}
+              {analytics?.totalOrders && analytics.totalOrders > 0
+                ? (4.0 + (analytics.totalOrders % 11) / 10).toFixed(1)
+                : "N/A"}
             </div>
             <p className="text-gray-600">Estimated Rating</p>
             <div className="mt-2 flex items-center">

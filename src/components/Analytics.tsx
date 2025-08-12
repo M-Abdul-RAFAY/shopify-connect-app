@@ -187,101 +187,103 @@ const Analytics = () => {
           },
         ];
 
-  const channelPerformance = isConnected && analytics 
-    ? [
-        {
-          channel: "Total Sales",
-          revenue: analytics.totalRevenue || 0,
-          orders: analytics.totalOrders || 0,
-          conversion: "Live",
-          color: "bg-blue-500",
-        },
-        {
-          channel: "Product Count",
-          revenue: analytics.totalProducts || 0,
-          orders: 0,
-          conversion: "Live",
-          color: "bg-purple-500",
-        },
-        {
-          channel: "Avg Order Value",
-          revenue: Math.round(analytics.averageOrderValue || 0),
-          orders: 0,
-          conversion: "Live",
-          color: "bg-green-500",
-        },
-      ]
-    : [
-        {
-          channel: "Connect Shopify",
-          revenue: 0,
-          orders: 0,
-          conversion: "N/A",
-          color: "bg-gray-400",
-        },
-        {
-          channel: "To View Real",
-          revenue: 0,
-          orders: 0,
-          conversion: "N/A",
-          color: "bg-gray-400",
-        },
-        {
-          channel: "Channel Data",
-          revenue: 0,
-          orders: 0,
-          conversion: "N/A",
-          color: "bg-gray-400",
-        },
-      ];
+  const channelPerformance =
+    isConnected && analytics
+      ? [
+          {
+            channel: "Total Sales",
+            revenue: analytics.totalRevenue || 0,
+            orders: analytics.totalOrders || 0,
+            conversion: "Live",
+            color: "bg-blue-500",
+          },
+          {
+            channel: "Product Count",
+            revenue: analytics.totalProducts || 0,
+            orders: 0,
+            conversion: "Live",
+            color: "bg-purple-500",
+          },
+          {
+            channel: "Avg Order Value",
+            revenue: Math.round(analytics.averageOrderValue || 0),
+            orders: 0,
+            conversion: "Live",
+            color: "bg-green-500",
+          },
+        ]
+      : [
+          {
+            channel: "Connect Shopify",
+            revenue: 0,
+            orders: 0,
+            conversion: "N/A",
+            color: "bg-gray-400",
+          },
+          {
+            channel: "To View Real",
+            revenue: 0,
+            orders: 0,
+            conversion: "N/A",
+            color: "bg-gray-400",
+          },
+          {
+            channel: "Channel Data",
+            revenue: 0,
+            orders: 0,
+            conversion: "N/A",
+            color: "bg-gray-400",
+          },
+        ];
 
-  const customerSegments = isConnected && analytics
-    ? [
-        {
-          segment: "Total Customers",
-          count: analytics.totalOrders || 0,
-          percentage: 100,
-          avgOrder: analytics.averageOrderValue || 0,
-          color: "bg-blue-500",
-        },
-        {
-          segment: "Total Products",
-          count: analytics.totalProducts || 0,
-          percentage: 100,
-          avgOrder: 0,
-          color: "bg-green-500",
-        },
-        {
-          segment: "Real-time Data",
-          count: 0,
-          percentage: 0,
-          avgOrder: 0,
-          color: "bg-purple-500",
-        },
-      ]
-    : [
-        {
-          segment: "Connect Shopify",
-          count: 0,
-          percentage: 0,
-          avgOrder: 0,
-          color: "bg-gray-400",
-        },
-        {
-          segment: "To View Customer",
-          count: 0,
-          percentage: 0,
-          avgOrder: 0,
-          color: "bg-gray-400",
-        },
-        {
-          segment: "Segmentation Data",
-          count: 0,
-          percentage: 0,
-          avgOrder: 0,
-          color: "bg-gray-400",
-        },
-      ];
+  const customerSegments =
+    isConnected && analytics
+      ? [
+          {
+            segment: "Total Customers",
+            count: analytics.totalOrders || 0,
+            percentage: 100,
+            avgOrder: analytics.averageOrderValue || 0,
+            color: "bg-blue-500",
+          },
+          {
+            segment: "Total Products",
+            count: analytics.totalProducts || 0,
+            percentage: 100,
+            avgOrder: 0,
+            color: "bg-green-500",
+          },
+          {
+            segment: "Real-time Data",
+            count: 0,
+            percentage: 0,
+            avgOrder: 0,
+            color: "bg-purple-500",
+          },
+        ]
+      : [
+          {
+            segment: "Connect Shopify",
+            count: 0,
+            percentage: 0,
+            avgOrder: 0,
+            color: "bg-gray-400",
+          },
+          {
+            segment: "To View Customer",
+            count: 0,
+            percentage: 0,
+            avgOrder: 0,
+            color: "bg-gray-400",
+          },
+          {
+            segment: "Segmentation Data",
+            count: 0,
+            percentage: 0,
+            avgOrder: 0,
+            color: "bg-gray-400",
+          },
+        ];
 
   return (
     <div className="space-y-6">
@@ -453,7 +455,9 @@ const Analytics = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">
-                    {isConnected ? formatCurrencyWithShop(product.revenue, shopData, true) : "N/A"}
+                    {isConnected
+                      ? formatCurrencyWithShop(product.revenue, shopData, true)
+                      : "N/A"}
                   </p>
                   <p className="text-xs text-green-600">{product.growth}</p>
                 </div>
@@ -479,7 +483,9 @@ const Analytics = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Revenue:</span>
                   <span className="font-medium">
-                    {isConnected ? formatCurrencyWithShop(channel.revenue, shopData, true) : "N/A"}
+                    {isConnected
+                      ? formatCurrencyWithShop(channel.revenue, shopData, true)
+                      : "N/A"}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -523,7 +529,10 @@ const Analytics = () => {
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">
-                  Avg Order: {isConnected ? formatCurrencyWithShop(segment.avgOrder, shopData, false) : "N/A"}
+                  Avg Order:{" "}
+                  {isConnected
+                    ? formatCurrencyWithShop(segment.avgOrder, shopData, false)
+                    : "N/A"}
                 </p>
               </div>
             </div>
@@ -541,9 +550,12 @@ const Analytics = () => {
             {isConnected && analytics ? (
               <>
                 <div className="text-3xl font-bold text-blue-600 mb-2">
-                  {(analytics.totalProducts || 0) > 0 ? 
-                    `${((analytics.totalOrders || 0) / (analytics.totalProducts || 1)).toFixed(1)}x` : 
-                    "0x"}
+                  {(analytics.totalProducts || 0) > 0
+                    ? `${(
+                        (analytics.totalOrders || 0) /
+                        (analytics.totalProducts || 1)
+                      ).toFixed(1)}x`
+                    : "0x"}
                 </div>
                 <p className="text-gray-600 text-sm">Orders per Product</p>
                 <div className="mt-4 flex items-center justify-center text-blue-600 text-sm">
@@ -553,7 +565,9 @@ const Analytics = () => {
               </>
             ) : (
               <>
-                <div className="text-3xl font-bold text-gray-400 mb-2">Connect</div>
+                <div className="text-3xl font-bold text-gray-400 mb-2">
+                  Connect
+                </div>
                 <p className="text-gray-600 text-sm">Connect Shopify to view</p>
                 <div className="mt-4 flex items-center justify-center text-gray-400 text-sm">
                   <TrendingUp className="w-4 h-4 mr-1" />
@@ -609,9 +623,13 @@ const Analytics = () => {
             {isConnected && analytics ? (
               <>
                 <div className="text-3xl font-bold text-purple-600 mb-2">
-                  {analytics.totalRevenue > 0 ? 
-                    `${((analytics.totalRevenue * 0.25) / analytics.totalRevenue * 100).toFixed(1)}%` : 
-                    "0%"}
+                  {analytics.totalRevenue > 0
+                    ? `${(
+                        ((analytics.totalRevenue * 0.25) /
+                          analytics.totalRevenue) *
+                        100
+                      ).toFixed(1)}%`
+                    : "0%"}
                 </div>
                 <p className="text-gray-600 text-sm">Estimated margin</p>
                 <div className="mt-4 flex items-center justify-center text-blue-600 text-sm">
