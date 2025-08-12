@@ -323,7 +323,7 @@ const Fulfillment = () => {
               <h3 className="text-2xl font-bold text-gray-900">
                 {isConnected && fulfillmentData
                   ? fulfillmentData.onTimeDeliveryRate
-                  : "98.5%"}
+                  : "Connect Store"}
               </h3>
               <p className="text-gray-600 text-sm">On-Time Delivery</p>
             </div>

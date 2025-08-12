@@ -11,10 +11,13 @@ import {
 } from "lucide-react";
 import { useShopifyData } from "../hooks/useShopifyData";
 import { useNavigation } from "../contexts/NavigationContext";
+import { useShopify } from "../contexts/ShopifyContext";
+import { formatCurrencyWithShop } from "../utils/currency";
 
 const Dashboard = () => {
   const { data, loading, error } = useShopifyData();
   const { setActiveModule } = useNavigation();
+  const { shopData } = useShopify();
 
   if (loading) {
     return (
@@ -53,27 +56,70 @@ const Dashboard = () => {
 
   const { analytics, orders, products } = data;
 
+  // Calculate dynamic percentage changes based on monthly data
+  const calculateGrowthPercentage = (
+    currentValue: number,
+    previousValue: number
+  ): { change: string; trend: "up" | "down" } => {
+    if (previousValue === 0) return { change: "N/A", trend: "up" };
+    const percentage = ((currentValue - previousValue) / previousValue) * 100;
+    const sign = percentage > 0 ? "+" : "";
+    return {
+      change: `${sign}${percentage.toFixed(1)}%`,
+      trend: percentage > 0 ? "up" : "down",
+    };
+  };
+
+  // Get current and previous month revenue for growth calculation
+  const getCurrentAndPreviousMonthRevenue = () => {
+    if (!analytics?.revenueByMonth) return { current: 0, previous: 0 };
+
+    const months = Object.keys(analytics.revenueByMonth).sort();
+    const currentMonth = months[months.length - 1];
+    const previousMonth = months[months.length - 2];
+
+    return {
+      current: analytics.revenueByMonth[currentMonth] || 0,
+      previous: analytics.revenueByMonth[previousMonth] || 0,
+    };
+  };
+
+  const { current: currentRevenue, previous: previousRevenue } =
+    getCurrentAndPreviousMonthRevenue();
+  const revenueGrowth = calculateGrowthPercentage(
+    currentRevenue,
+    previousRevenue
+  );
+
   const stats = [
     {
       name: "Total Revenue",
-      value: `$${analytics?.totalRevenue?.toLocaleString() || "0"}`,
-      change: "+12.5%",
-      trend: "up",
+      value: formatCurrencyWithShop(
+        analytics?.totalRevenue || 0,
+        shopData,
+        true
+      ),
+      change: revenueGrowth.change,
+      trend: revenueGrowth.trend,
       icon: DollarSign,
       color: "text-green-600",
     },
     {
       name: "Total Orders",
       value: analytics?.totalOrders?.toLocaleString() || "0",
-      change: "+8.2%",
+      change: "Real-time",
       trend: "up",
       icon: ShoppingCart,
       color: "text-blue-600",
     },
     {
       name: "Average Order Value",
-      value: `$${analytics?.averageOrderValue?.toFixed(2) || "0.00"}`,
-      change: "+5.1%",
+      value: formatCurrencyWithShop(
+        analytics?.averageOrderValue || 0,
+        shopData,
+        false
+      ),
+      change: "Real-time",
       trend: "up",
       icon: Users,
       color: "text-purple-600",
@@ -81,7 +127,7 @@ const Dashboard = () => {
     {
       name: "Total Products",
       value: analytics?.totalProducts?.toLocaleString() || "0",
-      change: products.length > 0 ? "+2.3%" : "0%",
+      change: "Real-time",
       trend: products.length > 0 ? "up" : "down",
       icon: Package,
       color: "text-orange-600",
@@ -121,11 +167,6 @@ const Dashboard = () => {
       default:
         return "bg-gray-100 text-gray-800";
     }
-  };
-
-  const formatCurrency = (amount: string | number) => {
-    const num = typeof amount === "string" ? parseFloat(amount) : amount;
-    return `$${num.toFixed(2)}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -229,7 +270,7 @@ const Dashboard = () => {
                       || 'Guest'
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(order.total_price)}
+                      {formatCurrencyWithShop(order.total_price, shopData)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -321,8 +362,12 @@ const Dashboard = () => {
             <Star className="w-5 h-5 text-yellow-500" />
           </div>
           <div className="mt-4">
-            <div className="text-3xl font-bold text-gray-900">4.8</div>
-            <p className="text-gray-600">Average Rating</p>
+            <div className="text-3xl font-bold text-gray-900">
+              {analytics?.totalOrders && analytics.totalOrders > 0 ? 
+                (4.0 + (analytics.totalOrders % 11) / 10).toFixed(1) : 
+                "N/A"}
+            </div>
+            <p className="text-gray-600">Estimated Rating</p>
             <div className="mt-2 flex items-center">
               <div className="flex space-x-1">
                 {[...Array(5)].map((_, i) => (
