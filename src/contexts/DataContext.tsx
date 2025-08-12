@@ -175,7 +175,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
       const productsRes = await cachedDataService.getProducts(
         shopDomain,
         accessToken || undefined,
-        { limit: 5000 }
+        { limit: 10000 }
       );
 
       // Step 3: Fetch orders
@@ -183,7 +183,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
       const ordersRes = await cachedDataService.getOrders(
         shopDomain,
         accessToken || undefined,
-        { limit: 5000 }
+        { limit: 10000 }
       );
 
       // Step 4: Fetch customers
@@ -191,7 +191,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
       const customersRes = await cachedDataService.getCustomers(
         shopDomain,
         accessToken || undefined,
-        { limit: 5000 }
+        { limit: 10000 }
       );
 
       // Step 5: Calculate analytics

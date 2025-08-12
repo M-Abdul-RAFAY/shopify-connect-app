@@ -53,15 +53,15 @@ const MainApp: React.FC = () => {
   const [activeModule, setActiveModule] = useState<Module>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isConnected, isLoading, shopData, disconnectShop } = useShopify();
-  const { loading, hasData, fetchAllData, refreshData } = useData();
+  const { loading, hasData, fetchAllData, refreshData, error } = useData();
 
-  // Auto-fetch data when connected
+  // Auto-fetch data when connected (but not if there's an error)
   useEffect(() => {
-    if (isConnected && !hasData && !loading.isLoading) {
+    if (isConnected && !hasData && !loading.isLoading && !error) {
       console.log("Auto-fetching data on connection...");
       fetchAllData();
     }
-  }, [isConnected, hasData, loading.isLoading, fetchAllData]);
+  }, [isConnected, hasData, loading.isLoading, error, fetchAllData]);
 
   // Debug logging
   console.log("MainApp - Current state:", {

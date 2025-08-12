@@ -127,14 +127,14 @@ export const useShopifyData = () => {
       // Use cached data service that automatically falls back to API if cache unavailable
       const [productsRes, ordersRes, customersRes] = await Promise.all([
         cachedDataService.getProducts(shopDomain, accessToken || undefined, {
-          limit: 5000,
-        }), // Get more products
+          limit: 10000,
+        }), // Get all products
         cachedDataService.getOrders(shopDomain, accessToken || undefined, {
-          limit: 5000,
-        }), // Get more orders
+          limit: 10000,
+        }), // Get all orders
         cachedDataService.getCustomers(shopDomain, accessToken || undefined, {
-          limit: 5000,
-        }), // Get more customers
+          limit: 10000,
+        }), // Get all customers
       ]);
 
       // Calculate analytics from the fetched data
@@ -205,7 +205,7 @@ export const useShopifyProducts = () => {
       const response = await cachedDataService.getProducts(
         shopDomain,
         accessToken || undefined,
-        { limit: 5000 }
+        { limit: 10000 }
       );
       console.log(
         `Fetched ${response.products.length} products from ${
@@ -252,7 +252,7 @@ export const useShopifyOrders = () => {
       const response = await cachedDataService.getOrders(
         shopDomain,
         accessToken || undefined,
-        { limit: 5000 }
+        { limit: 10000 }
       );
       console.log(
         `Fetched ${response.orders.length} orders from ${
@@ -299,7 +299,7 @@ export const useShopifyCustomers = () => {
       const response = await cachedDataService.getCustomers(
         shopDomain,
         accessToken || undefined,
-        { limit: 5000 }
+        { limit: 10000 }
       );
       console.log(
         `Fetched ${response.customers.length} customers from ${
