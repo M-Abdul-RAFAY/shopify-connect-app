@@ -1,5 +1,11 @@
 import React from "react";
-import { Loader2, Download, Database, BarChart3, CheckCircle } from "lucide-react";
+import {
+  Loader2,
+  Download,
+  Database,
+  BarChart3,
+  CheckCircle,
+} from "lucide-react";
 
 interface LoadingProgressProps {
   stage: string;
@@ -7,7 +13,11 @@ interface LoadingProgressProps {
   details: string;
 }
 
-const LoadingProgress: React.FC<LoadingProgressProps> = ({ stage, progress, details }) => {
+const LoadingProgress: React.FC<LoadingProgressProps> = ({
+  stage,
+  progress,
+  details,
+}) => {
   const getStageIcon = (currentStage: string) => {
     switch (currentStage) {
       case "Initializing":
@@ -40,10 +50,10 @@ const LoadingProgress: React.FC<LoadingProgressProps> = ({ stage, progress, deta
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            {getStageIcon(stage)}
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Loading Your Store Data</h2>
+          <div className="flex justify-center mb-4">{getStageIcon(stage)}</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Loading Your Store Data
+          </h2>
           <p className="text-gray-600 text-sm">
             Please wait while we fetch all your Shopify data...
           </p>

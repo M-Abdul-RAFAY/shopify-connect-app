@@ -67,32 +67,39 @@ const calculateAnalyticsFromData = (
 
   // Get recent orders (last 10)
   const recentOrders = orders
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
     .slice(0, 10);
 
   // Calculate revenue by month
   const revenueByMonth = orders.reduce((acc, order) => {
     const date = new Date(order.created_at);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthKey = `${date.getFullYear()}-${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}`;
     const amount = parseFloat(order.total_price || "0");
     acc[monthKey] = (acc[monthKey] || 0) + amount;
     return acc;
   }, {} as { [key: string]: number });
 
   // Calculate top products (simplified - based on line items)
-  const productSales: { [key: string]: { name: string; sales: number; revenue: number } } = {};
-  
-  orders.forEach(order => {
-    order.line_items?.forEach(item => {
+  const productSales: {
+    [key: string]: { name: string; sales: number; revenue: number };
+  } = {};
+
+  orders.forEach((order) => {
+    order.line_items?.forEach((item) => {
       const productName = item.title || "Unknown Product";
       const quantity = item.quantity || 0;
       const price = parseFloat(item.price || "0");
       const revenue = quantity * price;
-      
+
       if (!productSales[productName]) {
         productSales[productName] = { name: productName, sales: 0, revenue: 0 };
       }
-      
+
       productSales[productName].sales += quantity;
       productSales[productName].revenue += revenue;
     });
@@ -114,9 +121,11 @@ const calculateAnalyticsFromData = (
   };
 };
 
-export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const { isConnected } = useShopify();
-  
+
   const [data, setData] = useState<ShopifyData>({
     products: [],
     orders: [],
@@ -142,7 +151,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchAllData = useCallback(async () => {
     if (!isConnected) return;
 
-    setLoading({ isLoading: true, stage: "Initializing", progress: 0, details: "Preparing to fetch data..." });
+    setLoading({
+      isLoading: true,
+      stage: "Initializing",
+      progress: 0,
+      details: "Preparing to fetch data...",
+    });
     setError(null);
 
     try {
@@ -159,24 +173,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Step 2: Fetch products
       updateProgress("Products", 25, "Loading all products...");
       const productsRes = await cachedDataService.getProducts(
-        shopDomain, 
-        accessToken || undefined, 
+        shopDomain,
+        accessToken || undefined,
         { limit: 5000 }
       );
 
       // Step 3: Fetch orders
       updateProgress("Orders", 50, "Loading all orders...");
       const ordersRes = await cachedDataService.getOrders(
-        shopDomain, 
-        accessToken || undefined, 
+        shopDomain,
+        accessToken || undefined,
         { limit: 5000 }
       );
 
       // Step 4: Fetch customers
       updateProgress("Customers", 75, "Loading all customers...");
       const customersRes = await cachedDataService.getCustomers(
-        shopDomain, 
-        accessToken || undefined, 
+        shopDomain,
+        accessToken || undefined,
         { limit: 5000 }
       );
 
@@ -211,7 +225,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         totalOrders: ordersRes.pagination?.total_count || 0,
         totalCustomers: customersRes.pagination?.total_count || 0,
       });
-
     } catch (err) {
       console.error("Data fetch error:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch data");
