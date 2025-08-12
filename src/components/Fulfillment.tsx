@@ -235,12 +235,18 @@ const Fulfillment = () => {
   };
 
   const filteredShipments = shipments.filter((shipment: any) => {
-    // Search filter
+    // Search filter with null safety
     const matchesSearch =
-      shipment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shipment.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shipment.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shipment.trackingNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      (shipment.id?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (shipment.orderId?.toLowerCase() || "").includes(
+        searchTerm.toLowerCase()
+      ) ||
+      (shipment.customer?.toLowerCase() || "").includes(
+        searchTerm.toLowerCase()
+      ) ||
+      (shipment.trackingNumber?.toLowerCase() || "").includes(
+        searchTerm.toLowerCase()
+      );
 
     // Status filter
     const matchesStatus = !selectedStatus || shipment.status === selectedStatus;

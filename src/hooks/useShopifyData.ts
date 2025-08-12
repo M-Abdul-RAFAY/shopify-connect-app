@@ -467,14 +467,54 @@ export const useShopifyFulfillment = () => {
         { limit: 10000 }
       );
       const orders = response.orders;
+
+      // Map orders to shipment format expected by Fulfillment component
+      const shipments = orders.map((order: any, index: number) => ({
+        id: `SHP-${order.id || index}`,
+        orderId: order.name || `#${order.id || index}`,
+        customer:
+          order.customer?.first_name && order.customer?.last_name
+            ? `${order.customer.first_name} ${order.customer.last_name}`
+            : order.billing_address?.name ||
+              order.shipping_address?.name ||
+              "Unknown Customer",
+        origin: "Main Warehouse",
+        destination: order.shipping_address
+          ? `${order.shipping_address.address1 || ""}, ${
+              order.shipping_address.city || ""
+            }, ${order.shipping_address.province_code || ""}`
+          : "Unknown Address",
+        carrier: ["FedEx", "UPS", "DHL", "USPS"][index % 4],
+        trackingNumber: order.tracking_number || `TR${Date.now()}${index}`,
+        status:
+          order.fulfillment_status === "fulfilled"
+            ? "Delivered"
+            : order.fulfillment_status === "partial"
+            ? "In Transit"
+            : order.fulfillment_status === "restocked"
+            ? "Exception"
+            : "Processing",
+        estimatedDelivery: order.created_at
+          ? new Date(
+              new Date(order.created_at).getTime() + 5 * 24 * 60 * 60 * 1000
+            )
+              .toISOString()
+              .split("T")[0]
+          : "",
+        actualDelivery:
+          order.fulfillment_status === "fulfilled"
+            ? order.updated_at?.split("T")[0]
+            : null,
+        items: order.line_items?.length || 1,
+        weight: `${(Math.random() * 5 + 1).toFixed(1)} lbs`,
+        cost: parseFloat(order.total_shipping || "10.99"),
+      }));
+
       // Mock fulfillment stats
       const fulfillmentStats = {
-        shipments: orders.map((order) => ({
-          id: order.id,
-          status: order.fulfillment_status,
-        })),
+        shipments,
         fulfillmentCenters: [],
-        totalShipments: orders.length,
+        totalShipments: shipments.length,
         avgProcessingTime: "2 days",
         onTimeDeliveryRate: "98%",
       };
