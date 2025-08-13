@@ -343,10 +343,10 @@ const OrderManagementSystem = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Order Management System
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 dark:text-gray-300 mt-1">
             Track fulfilled orders with PostEx logistics integration • Click
             "Refresh Tracking" to get latest status • {filteredOrders.length}{" "}
             orders{" "}
@@ -359,7 +359,7 @@ const OrderManagementSystem = () => {
           <button
             onClick={handleRefreshTracking}
             disabled={trackingLoading}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-medium"
+            className="flex items-center px-4 py-2 bg-gradient-to-r from-primary-600 to-purple-600 dark:from-primary-500 dark:to-purple-500 text-white rounded-xl hover:from-primary-700 hover:to-purple-700 dark:hover:from-primary-600 dark:hover:to-purple-600 disabled:opacity-50 text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
           >
             <RefreshCw
               className={`w-4 h-4 mr-2 ${
@@ -372,32 +372,32 @@ const OrderManagementSystem = () => {
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 animate-slide-up">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             placeholder="Search orders, customers, or tracking numbers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
           />
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow duration-300 animate-slide-up">
+        <div className="px-4 lg:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Orders ({filteredOrders.length})
           </h2>
         </div>
 
         {trackingError && (
-          <div className="px-6 py-4 bg-yellow-50 border-b border-yellow-200">
+          <div className="px-4 lg:px-6 py-4 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800">
             <div className="flex items-center">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
-              <span className="text-yellow-800">
+              <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2" />
+              <span className="text-yellow-800 dark:text-yellow-200">
                 Some tracking data may be unavailable: {trackingError}
               </span>
             </div>
@@ -406,81 +406,81 @@ const OrderManagementSystem = () => {
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Order
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Customer
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="hidden sm:table-cell px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Amount
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="hidden lg:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Tracking
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {paginatedOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200">
+                  <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
                         {order.name || order.order_number}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
                         {new Date(order.created_at).toLocaleDateString()}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                  <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 dark:text-gray-100">
                       {order.customer?.first_name} {order.customer?.last_name}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-32">
                       {order.customer?.email}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                  <td className="hidden sm:table-cell px-4 lg:px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       Rs.{" "}
                       {parseFloat(order.total_price || "0").toLocaleString()}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                     <div
-                      className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                      className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
                         order
                       )}`}
                     >
                       {getStatusIcon(order)}
-                      <span>{getStatusText(order)}</span>
+                      <span className="hidden sm:inline">{getStatusText(order)}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                  <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 dark:text-gray-100 font-mono">
                       {getTrackingNumber(order) || "No tracking"}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
                     {getTrackingNumber(order) && (
                       <button
                         onClick={() => {
                           const trackingNum = getTrackingNumber(order);
                           if (trackingNum) handleTrackOrder(trackingNum);
                         }}
-                        className="flex items-center text-blue-600 hover:text-blue-900"
+                        className="flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors duration-200 px-3 py-1 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20"
                       >
                         <Eye className="w-4 h-4 mr-1" />
-                        Track
+                        <span className="hidden sm:inline">Track</span>
                       </button>
                     )}
                   </td>
@@ -490,12 +490,12 @@ const OrderManagementSystem = () => {
           </table>
 
           {filteredOrders.length === 0 && (
-            <div className="text-center py-12">
-              <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <div className="text-center py-12 bg-white dark:bg-gray-800">
+              <Package className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 No fulfilled orders with tracking found
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-300">
                 {searchTerm
                   ? "Try adjusting your search terms"
                   : "Only orders with PostEx fulfillments and tracking numbers are shown here"}
