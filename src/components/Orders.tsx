@@ -185,8 +185,10 @@ const Orders = () => {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Order Management
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Loading orders from {shopData?.name}...
           </p>
         </div>
@@ -194,10 +196,10 @@ const Orders = () => {
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-pulse"
             >
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
             </div>
           ))}
         </div>
@@ -210,9 +212,11 @@ const Orders = () => {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600">{error}</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Order Management
+          </h1>
+          <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-red-600 dark:text-red-400">{error}</p>
           </div>
         </div>
       </div>
@@ -222,17 +226,17 @@ const Orders = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Processing":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400";
       case "Shipped":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400";
       case "Delivered":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400";
       case "Pending":
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300";
       case "Cancelled":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300";
     }
   };
 
@@ -256,13 +260,13 @@ const Orders = () => {
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
       case "Paid":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400";
       case "Pending":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400";
       case "Refunded":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300";
     }
   };
 
@@ -282,7 +286,9 @@ const Orders = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">Order Management</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Order Management
+          </h1>
           <p className="text-gray-600 dark:text-gray-300 mt-1">
             {isConnected
               ? `Manage orders from ${shopData?.name} • ${
@@ -316,7 +322,9 @@ const Orders = () => {
                   ? orderStats.totalOrders.toLocaleString()
                   : "1,247"}
               </h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">Total Orders</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
+                Total Orders
+              </p>
             </div>
           </div>
         </div>
@@ -332,7 +340,9 @@ const Orders = () => {
                   ? orderStats.processing.toLocaleString()
                   : "156"}
               </h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">Processing</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
+                Processing
+              </p>
             </div>
           </div>
         </div>
@@ -348,7 +358,9 @@ const Orders = () => {
                   ? orderStats.completed.toLocaleString()
                   : "1,089"}
               </h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">Completed</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
+                Completed
+              </p>
             </div>
           </div>
         </div>
@@ -364,7 +376,9 @@ const Orders = () => {
                   ? orderStats.inTransit.toLocaleString()
                   : "298"}
               </h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">In Transit</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
+                In Transit
+              </p>
             </div>
           </div>
         </div>
@@ -484,7 +498,10 @@ const Orders = () => {
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {paginatedOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200">
+                <tr
+                  key={order.id}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
+                >
                   <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-primary-600 dark:text-primary-400">
@@ -502,7 +519,9 @@ const Orders = () => {
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                         <Mail className="w-3 h-3 mr-1" />
-                        <span className="truncate max-w-24 sm:max-w-32">{order.customer.email}</span>
+                        <span className="truncate max-w-24 sm:max-w-32">
+                          {order.customer.email}
+                        </span>
                       </div>
                     </div>
                   </td>
@@ -538,8 +557,12 @@ const Orders = () => {
                   <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center text-sm text-gray-900 dark:text-gray-100">
                       <Calendar className="w-4 h-4 mr-1 text-gray-400 dark:text-gray-500" />
-                      <span className="hidden sm:inline">{formatDate(order.orderDate)}</span>
-                      <span className="sm:hidden">{new Date(order.orderDate).toLocaleDateString()}</span>
+                      <span className="hidden sm:inline">
+                        {formatDate(order.orderDate)}
+                      </span>
+                      <span className="sm:hidden">
+                        {new Date(order.orderDate).toLocaleDateString()}
+                      </span>
                     </div>
                   </td>
                 </tr>

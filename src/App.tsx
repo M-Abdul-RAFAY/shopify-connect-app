@@ -191,7 +191,7 @@ const MainApp: React.FC = () => {
           {/* Sidebar */}
           <div
             className={`
-          fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-xl border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out
+          fixed lg:sticky inset-y-0 lg:inset-y-auto left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-xl border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out lg:top-0 lg:h-screen
           ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           }

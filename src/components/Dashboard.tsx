@@ -19,17 +19,21 @@ const Dashboard = () => {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Loading your store data...</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Dashboard
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Loading your store data...
+          </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-pulse"
             >
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
             </div>
           ))}
         </div>
@@ -41,9 +45,11 @@ const Dashboard = () => {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600">{error}</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Dashboard
+          </h1>
+          <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-red-600 dark:text-red-400">{error}</p>
           </div>
         </div>
       </div>
@@ -139,7 +145,7 @@ const Dashboard = () => {
       change: "Real-time",
       trend: "up",
       icon: DollarSign,
-      color: "text-green-600",
+      color: "text-green-600 dark:text-green-400",
     },
     {
       name: "Total Orders",
@@ -147,7 +153,7 @@ const Dashboard = () => {
       change: "Real-time",
       trend: "up",
       icon: ShoppingCart,
-      color: "text-blue-600",
+      color: "text-blue-600 dark:text-blue-400",
     },
     {
       name: "Average Order Value",
@@ -155,7 +161,7 @@ const Dashboard = () => {
       change: "Real-time",
       trend: "up",
       icon: Users,
-      color: "text-purple-600",
+      color: "text-purple-600 dark:text-purple-400",
     },
     {
       name: "Total Products",
@@ -163,7 +169,7 @@ const Dashboard = () => {
       change: "Real-time",
       trend: products.length > 0 ? "up" : "down",
       icon: Package,
-      color: "text-orange-600",
+      color: "text-orange-600 dark:text-orange-400",
     },
   ];
 
@@ -191,14 +197,14 @@ const Dashboard = () => {
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "fulfilled":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400";
       case "partial":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400";
       case "pending":
       case "unfulfilled":
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300";
     }
   };
 
@@ -216,7 +222,9 @@ const Dashboard = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">Dashboard</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          Dashboard
+        </h1>
         <p className="text-gray-600 dark:text-gray-300 mt-1">
           Welcome back! Here's what's happening with your store today.
         </p>
@@ -233,21 +241,31 @@ const Dashboard = () => {
               className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 hover:shadow-lg dark:hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
             >
               <div className="flex items-center justify-between">
-                <div className={`p-2 lg:p-3 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 group-hover:scale-110 transition-transform duration-200`}>
+                <div
+                  className={`p-2 lg:p-3 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 group-hover:scale-110 transition-transform duration-200`}
+                >
                   <Icon className={`w-6 h-6 ${stat.color}`} />
                 </div>
                 <div
                   className={`flex items-center ${
-                    stat.trend === "up" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                    stat.trend === "up"
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-red-600 dark:text-red-400"
                   }`}
                 >
                   <TrendIcon className="w-4 h-4 mr-1" />
-                  <span className="text-xs lg:text-sm font-medium">{stat.change}</span>
+                  <span className="text-xs lg:text-sm font-medium">
+                    {stat.change}
+                  </span>
                 </div>
               </div>
               <div className="mt-4">
-                <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-                <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300">{stat.name}</p>
+                <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
+                  {stat.value}
+                </p>
+                <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300">
+                  {stat.name}
+                </p>
               </div>
             </div>
           );
@@ -294,7 +312,10 @@ const Dashboard = () => {
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {recentOrders.map((order, index) => (
-                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200">
+                  <tr
+                    key={index}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
+                  >
                     <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                       #{order.order_number || order.id}
                     </td>
@@ -354,13 +375,17 @@ const Dashboard = () => {
                   <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                     {item.name}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{item.location}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {item.location}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold text-orange-600 dark:text-orange-400">
                     {item.current}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Min: {item.minimum}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Min: {item.minimum}
+                  </p>
                 </div>
               </div>
             ))}
@@ -438,7 +463,9 @@ const Dashboard = () => {
             <p className="text-gray-600 dark:text-gray-300">Orders Fulfilled</p>
             <div className="mt-2 flex items-center">
               <TrendingUp className="w-4 h-4 text-green-500 dark:text-green-400 mr-1" />
-              <span className="text-sm text-green-600 dark:text-green-400">Live data</span>
+              <span className="text-sm text-green-600 dark:text-green-400">
+                Live data
+              </span>
             </div>
           </div>
         </div>
@@ -459,7 +486,9 @@ const Dashboard = () => {
             <p className="text-gray-600 dark:text-gray-300">Active Products</p>
             <div className="mt-2 flex items-center">
               <TrendingUp className="w-4 h-4 text-blue-500 dark:text-blue-400 mr-1" />
-              <span className="text-sm text-blue-600 dark:text-blue-400">Growing catalog</span>
+              <span className="text-sm text-blue-600 dark:text-blue-400">
+                Growing catalog
+              </span>
             </div>
           </div>
         </div>

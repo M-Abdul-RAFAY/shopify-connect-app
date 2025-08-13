@@ -38,17 +38,17 @@ const OrderTrackingModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               Order Tracking: {trackingNumber}
             </h2>
             <div className="flex space-x-2">
               <button
                 onClick={refresh}
                 disabled={loading}
-                className="p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50"
               >
                 <RefreshCw
                   className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}
@@ -56,7 +56,7 @@ const OrderTrackingModal = ({
               </button>
               <button
                 onClick={onClose}
-                className="p-2 text-gray-500 hover:text-gray-700"
+                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               >
                 <XCircle className="w-5 h-5" />
               </button>
@@ -68,17 +68,17 @@ const OrderTrackingModal = ({
           {loading && (
             <div className="flex items-center justify-center py-8">
               <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
-              <span className="ml-3 text-gray-600">
+              <span className="ml-3 text-gray-600 dark:text-gray-300">
                 Loading tracking information...
               </span>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
               <div className="flex items-center">
-                <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
-                <span className="text-red-800">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2" />
+                <span className="text-red-800 dark:text-red-200">
                   Error loading tracking information
                 </span>
               </div>
@@ -86,16 +86,16 @@ const OrderTrackingModal = ({
           )}
 
           {currentStatus && (
-            <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-xl p-6 mb-6 border border-emerald-200">
+            <div className="bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 rounded-xl p-6 mb-6 border border-emerald-200 dark:border-emerald-800">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                     Current Status
                   </h3>
-                  <p className="text-2xl font-bold text-emerald-600">
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     {currentStatus.transactionStatusMessage}
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     Last updated: {currentStatus.modifiedDatetime}
                   </p>
                 </div>
@@ -399,17 +399,17 @@ const Fulfillment = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Processing":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400";
       case "Ready to Ship":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400";
       case "In Transit":
-        return "bg-purple-100 text-purple-800";
+        return "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400";
       case "Delivered":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400";
       case "Exception":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300";
     }
   };
 
@@ -445,10 +445,10 @@ const Fulfillment = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Logistics & Fulfillment
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             {isConnected
               ? `Manage shipments from ${shopData?.name} • ${
                   filteredShipments.length
@@ -464,77 +464,85 @@ const Fulfillment = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-blue-100">
-              <Package className="w-6 h-6 text-blue-600" />
+            <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+              <Package className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {isConnected && fulfillmentData
                   ? fulfillmentData.totalShipments
                   : shipments.length}
               </h3>
-              <p className="text-gray-600 text-sm">Active Shipments</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Active Shipments
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-purple-100">
-              <Truck className="w-6 h-6 text-purple-600" />
+            <div className="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+              <Truck className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {shipments.filter((s: any) => s.status === "In Transit").length}
               </h3>
-              <p className="text-gray-600 text-sm">In Transit</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                In Transit
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-green-100">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+            <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/30">
+              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {isConnected && fulfillmentData
                   ? fulfillmentData.onTimeDeliveryRate
                   : "Connect Store"}
               </h3>
-              <p className="text-gray-600 text-sm">On-Time Delivery</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                On-Time Delivery
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-orange-100">
-              <AlertTriangle className="w-6 h-6 text-orange-600" />
+            <div className="p-3 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+              <AlertTriangle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {shipments.filter((s: any) => s.status === "Exception").length}
               </h3>
-              <p className="text-gray-600 text-sm">Exceptions</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Exceptions
+              </p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex-1 max-w-lg">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search shipments, orders, tracking numbers..."
-                className="pl-10 pr-4 py-3 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-10 pr-4 py-3 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -544,7 +552,7 @@ const Fulfillment = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setFilterOpen(!filterOpen)}
-              className="flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
+              className="flex items-center px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               <Filter className="w-4 h-4 mr-2" />
               Filters
@@ -598,55 +606,58 @@ const Fulfillment = () => {
       </div>
 
       {/* Shipments Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Shipment
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Customer
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Route
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Amount
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Delivery
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {paginatedShipments.map((shipment: any) => (
-                <tr key={shipment.id} className="hover:bg-gray-50">
+                <tr
+                  key={shipment.id}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm text-blue-600">
+                      <div className="text-sm text-blue-600 dark:text-blue-400">
                         {shipment.orderId}
                       </div>
-                      <div className="text-xs text-gray-400 font-mono">
+                      <div className="text-xs text-gray-400 dark:text-gray-500 font-mono">
                         {shipment.trackingNumber || "N/A"}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {shipment.customer}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
                       {shipment.items} items
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-gray-400 dark:text-gray-500">
                       {shipment.weight}
                     </div>
                   </td>
