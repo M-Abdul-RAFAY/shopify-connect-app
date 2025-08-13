@@ -561,10 +561,10 @@ const Fulfillment = () => {
         </div>
 
         {filterOpen && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <select
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
               >
@@ -576,7 +576,7 @@ const Fulfillment = () => {
                 <option value="Exception">Exception</option>
               </select>
               <select
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={selectedOrigin}
                 onChange={(e) => setSelectedOrigin(e.target.value)}
               >
@@ -592,11 +592,11 @@ const Fulfillment = () => {
                     setSelectedStatus("");
                     setSelectedOrigin("");
                   }}
-                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                  className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors text-sm font-medium"
                 >
                   Clear
                 </button>
-                <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                <button className="flex-1 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 text-sm font-medium">
                   Apply Filters
                 </button>
               </div>
@@ -662,12 +662,12 @@ const Fulfillment = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-gray-900 dark:text-white">
                       <div className="flex items-center mb-1">
                         <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
                         {shipment.origin}
                       </div>
-                      <div className="flex items-center text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                         <Navigation className="w-3 h-3 mr-1" />
                         {shipment.destination.length > 25
                           ? shipment.destination.slice(0, 25) + "…"
@@ -687,19 +687,19 @@ const Fulfillment = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {formatCurrencyWithShop(shipment.cost || 0, shopData)}
                     </div>
-                    <div className="text-xs text-gray-500">Order Total</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Order Total</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-gray-900 dark:text-white">
                       <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1 text-gray-400" />
+                        <Calendar className="w-4 h-4 mr-1 text-gray-400 dark:text-gray-500" />
                         {formatDate(shipment.estimatedDelivery)}
                       </div>
                       {shipment.actualDelivery && (
-                        <div className="text-xs text-green-600">
+                        <div className="text-xs text-green-600 dark:text-green-400">
                           Delivered: {formatDate(shipment.actualDelivery)}
                         </div>
                       )}
@@ -708,7 +708,7 @@ const Fulfillment = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => handleTrackOrder(shipment)}
-                      className="flex items-center text-blue-600 hover:text-blue-900"
+                      className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       Track
