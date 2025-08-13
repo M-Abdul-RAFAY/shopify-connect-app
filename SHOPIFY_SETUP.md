@@ -17,16 +17,16 @@ Copy the `.env` file and update the values:
 VITE_SHOPIFY_APP_ID=your_actual_shopify_app_id_here
 VITE_SHOPIFY_APP_SECRET=your_actual_shopify_app_secret_here
 VITE_SHOPIFY_SCOPES=read_products,read_orders,read_customers,read_inventory,read_analytics
-VITE_SHOPIFY_REDIRECT_URI=https://53d8df69f208.ngrok-free.app/auth/callback
-VITE_API_BASE_URL=https://53d8df69f208.ngrok-free.app/api
+VITE_SHOPIFY_REDIRECT_URI=hhttps://fc46941ec5b8.ngrok-free.app/auth/callback
+VITE_API_BASE_URL=hhttps://fc46941ec5b8.ngrok-free.app/api
 ```
 
 ## 3. Shopify App Settings
 
 In your Shopify app settings:
 
-1. Set the **App URL** to: `https://53d8df69f208.ngrok-free.app`
-2. Set the **Allowed redirection URL(s)** to: `https://53d8df69f208.ngrok-free.app/auth/callback`
+1. Set the **App URL** to: `hhttps://fc46941ec5b8.ngrok-free.app`
+2. Set the **Allowed redirection URL(s)** to: `hhttps://fc46941ec5b8.ngrok-free.app/auth/callback`
 3. Make sure your app has the required scopes enabled
 
 ## 4. Testing the Integration

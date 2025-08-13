@@ -307,7 +307,7 @@ class ShopifyAPI {
       "read_products,read_orders,read_customers,read_shop";
     const redirectUri =
       import.meta.env.VITE_SHOPIFY_REDIRECT_URI ||
-      "https://53d8df69f208.ngrok-free.app/auth/callback";
+      "hhttps://fc46941ec5b8.ngrok-free.app/auth/callback";
     const state = Math.random().toString(36).substring(7);
 
     Cookies.set("shopify_oauth_state", state, { expires: 1 });
@@ -337,7 +337,7 @@ class ShopifyAPI {
       "read_products,read_orders,read_customers,read_shop";
     const redirectUri =
       import.meta.env.VITE_SHOPIFY_REDIRECT_URI ||
-      "https://53d8df69f208.ngrok-free.app/auth/callback";
+      "hhttps://fc46941ec5b8.ngrok-free.app/auth/callback";
     const state = Math.random().toString(36).substring(7);
 
     Cookies.set("shopify_oauth_state", state, { expires: 1 });

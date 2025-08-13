@@ -378,7 +378,6 @@ const MainApp: React.FC = () => {
                         </button>
                       </div>
                     )}
-                    </div>
                   </div>
                 </div>
               </div>
