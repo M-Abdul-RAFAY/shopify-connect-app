@@ -163,20 +163,23 @@ const OrderManagementSystem = () => {
   // Filter and extract tracking numbers from fulfilled orders only
   const fulfilledOrdersWithTracking = orders.filter((order) => {
     // Check if order has fulfillments with tracking numbers
-    return order.fulfillments && 
-           order.fulfillments.length > 0 && 
-           order.fulfillments.some((fulfillment: Fulfillment) => 
-             fulfillment.tracking_number && 
-             fulfillment.tracking_company === "PostEx"
-           );
+    return (
+      order.fulfillments &&
+      order.fulfillments.length > 0 &&
+      order.fulfillments.some(
+        (fulfillment: Fulfillment) =>
+          fulfillment.tracking_number &&
+          fulfillment.tracking_company === "PostEx"
+      )
+    );
   });
 
   // Extract tracking numbers from fulfilled orders
   const trackingNumbers = fulfilledOrdersWithTracking
     .map((order) => {
       // Get tracking number from fulfillments
-      const fulfillment = order.fulfillments?.find((f: Fulfillment) => 
-        f.tracking_number && f.tracking_company === "PostEx"
+      const fulfillment = order.fulfillments?.find(
+        (f: Fulfillment) => f.tracking_number && f.tracking_company === "PostEx"
       );
       return fulfillment?.tracking_number;
     })
@@ -194,8 +197,8 @@ const OrderManagementSystem = () => {
 
   // Helper function to get tracking number from fulfillments
   const getTrackingNumber = (order: any) => {
-    const fulfillment = order.fulfillments?.find((f: Fulfillment) => 
-      f.tracking_number && f.tracking_company === "PostEx"
+    const fulfillment = order.fulfillments?.find(
+      (f: Fulfillment) => f.tracking_number && f.tracking_company === "PostEx"
     );
     return fulfillment?.tracking_number || null;
   };
