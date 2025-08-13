@@ -12,7 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useData } from "../contexts/DataContext";
-import { formatCurrency } from "../utils/currency";
+import { formatCurrencyWithShop } from "../utils/currency";
 
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -403,9 +403,9 @@ const Inventory = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(
-                        parseFloat(mainVariant.price),
-                        shopCurrency
+                      {formatCurrencyWithShop(
+                        mainVariant.price,
+                        shop
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

@@ -432,12 +432,12 @@ const Dashboard = () => {
       </div>
 
       {/* Order Tracking Section */}
-      <div className="mt-8">
+      {/* <div className="mt-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
           Order Tracking
         </h2>
         <QuickTrackingLookup />
-      </div>
+      </div> */}
     </div>
   );
 };
