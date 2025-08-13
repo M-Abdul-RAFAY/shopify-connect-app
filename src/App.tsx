@@ -191,7 +191,7 @@ const MainApp: React.FC = () => {
           {/* Sidebar */}
           <div
             className={`
-          fixed lg:sticky inset-y-0 lg:inset-y-auto left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-xl border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out lg:top-0 lg:h-screen
+          fixed lg:sticky inset-y-0 lg:inset-y-auto left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-xl border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out lg:top-0 lg:h-screen flex flex-col sidebar-scroll overflow-y-auto
           ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           }
@@ -241,7 +241,7 @@ const MainApp: React.FC = () => {
               </div>
             )}
 
-            <nav className="flex-1 px-4 py-6 space-y-2">
+            <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (

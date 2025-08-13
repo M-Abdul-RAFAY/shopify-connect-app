@@ -50,6 +50,33 @@ body {
   background: #9ca3af;
 }
 
+/* Sidebar specific scrollbar */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+
+.dark .sidebar-scroll {
+  scrollbar-color: #6b7280 #374151;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 9999px;
+}
+
+.dark .sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
 /* Animation Keyframes */
 @keyframes fadeIn {
   from {
