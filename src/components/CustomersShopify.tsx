@@ -175,7 +175,9 @@ const CustomersShopify = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">Customers</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Customers
+          </h1>
           <p className="text-gray-600 dark:text-gray-300 mt-1">
             Manage customers from {shopData?.shop?.name} • {customers.length}{" "}
             total customers
@@ -195,7 +197,9 @@ const CustomersShopify = () => {
               <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                 {customerStats.total}
               </p>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">Total Customers</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
+                Total Customers
+              </p>
             </div>
           </div>
         </div>
@@ -209,7 +213,9 @@ const CustomersShopify = () => {
               <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                 {formatCurrency(customerStats.totalSpent)}
               </p>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">Total Spent</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
+                Total Spent
+              </p>
             </div>
           </div>
         </div>
@@ -223,7 +229,9 @@ const CustomersShopify = () => {
               <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                 {formatCurrency(customerStats.averageSpent)}
               </p>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">Average Spent</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
+                Average Spent
+              </p>
             </div>
           </div>
         </div>
@@ -237,7 +245,9 @@ const CustomersShopify = () => {
               <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                 {customerStats.totalOrders}
               </p>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">Total Orders</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
+                Total Orders
+              </p>
             </div>
           </div>
         </div>
@@ -303,13 +313,13 @@ const CustomersShopify = () => {
                         ? `${customer.first_name} ${customer.last_name}`
                         : customer.email}
                     </h3>
-                    <span
+                    {/* <span
                       className={`px-3 py-1 text-xs font-medium rounded-full ${getTierColor(
                         tier
                       )}`}
                     >
                       {tier}
-                    </span>
+                    </span> */}
                   </div>
 
                   <div className="mt-2 space-y-2">
@@ -346,13 +356,17 @@ const CustomersShopify = () => {
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-gray-500 dark:text-gray-400">Total Spent</p>
+                        <p className="text-gray-500 dark:text-gray-400">
+                          Total Spent
+                        </p>
                         <p className="font-semibold text-gray-900 dark:text-white">
                           {formatCurrency(customer.total_spent)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-500 dark:text-gray-400">Orders</p>
+                        <p className="text-gray-500 dark:text-gray-400">
+                          Orders
+                        </p>
                         <p className="font-semibold text-gray-900 dark:text-white">
                           {customer.orders_count}
                         </p>
@@ -368,8 +382,12 @@ const CustomersShopify = () => {
         {sortedCustomers.length === 0 && (
           <div className="col-span-full text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
             <Users className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-2">No customers found</p>
-            <p className="text-sm text-gray-400 dark:text-gray-500">Try adjusting your search or filters</p>
+            <p className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-2">
+              No customers found
+            </p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              Try adjusting your search or filters
+            </p>
           </div>
         )}
       </div>
