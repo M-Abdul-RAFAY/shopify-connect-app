@@ -175,8 +175,8 @@ const CustomersShopify = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">Customers</h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-1">
             Manage customers from {shopData?.shop?.name} • {customers.length}{" "}
             total customers
           </p>
@@ -185,74 +185,74 @@ const CustomersShopify = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 animate-slide-up">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group">
           <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-blue-100">
-              <Users className="w-6 h-6 text-blue-600" />
+            <div className="p-2 lg:p-3 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 group-hover:scale-110 transition-transform duration-200">
+              <Users className="w-5 lg:w-6 h-5 lg:h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="ml-4">
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                 {customerStats.total}
               </p>
-              <p className="text-gray-600">Total Customers</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">Total Customers</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group">
           <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-green-100">
-              <DollarSign className="w-6 h-6 text-green-600" />
+            <div className="p-2 lg:p-3 rounded-xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 group-hover:scale-110 transition-transform duration-200">
+              <DollarSign className="w-5 lg:w-6 h-5 lg:h-6 text-green-600 dark:text-green-400" />
             </div>
             <div className="ml-4">
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                 {formatCurrency(customerStats.totalSpent)}
               </p>
-              <p className="text-gray-600">Total Spent</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">Total Spent</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group">
           <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-purple-100">
-              <Star className="w-6 h-6 text-purple-600" />
+            <div className="p-2 lg:p-3 rounded-xl bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 group-hover:scale-110 transition-transform duration-200">
+              <Star className="w-5 lg:w-6 h-5 lg:h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div className="ml-4">
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                 {formatCurrency(customerStats.averageSpent)}
               </p>
-              <p className="text-gray-600">Average Spent</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">Average Spent</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group">
           <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-orange-100">
-              <ShoppingBag className="w-6 h-6 text-orange-600" />
+            <div className="p-2 lg:p-3 rounded-xl bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/30 dark:to-orange-800/30 group-hover:scale-110 transition-transform duration-200">
+              <ShoppingBag className="w-5 lg:w-6 h-5 lg:h-6 text-orange-600 dark:text-orange-400" />
             </div>
             <div className="ml-4">
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                 {customerStats.totalOrders}
               </p>
-              <p className="text-gray-600">Total Orders</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">Total Orders</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 animate-slide-up">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex-1 max-w-lg">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search customers by name, email, or phone..."
-                className="pl-10 pr-4 py-3 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-10 pr-4 py-3 w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -263,14 +263,14 @@ const CustomersShopify = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
             >
               <option value="created_at">Newest First</option>
               <option value="total_spent">Highest Spent</option>
               <option value="orders_count">Most Orders</option>
               <option value="last_name">Name A-Z</option>
             </select>
-            <button className="flex items-center px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+            <button className="flex items-center px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 hover:shadow-sm">
               <Filter className="w-4 h-4 mr-2" />
               Filter
             </button>
@@ -279,16 +279,16 @@ const CustomersShopify = () => {
       </div>
 
       {/* Customers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 animate-slide-up">
         {paginatedCustomers.map((customer) => {
           const tier = getTierFromSpent(customer.total_spent);
           return (
             <div
               key={customer.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group"
             >
               <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
                   <span className="text-white font-bold text-lg">
                     {customer.first_name?.charAt(0) ||
                       customer.email?.charAt(0) ||
@@ -298,13 +298,13 @@ const CustomersShopify = () => {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900 truncate">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
                       {customer.first_name && customer.last_name
                         ? `${customer.first_name} ${customer.last_name}`
                         : customer.email}
                     </h3>
                     <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${getTierColor(
+                      className={`px-3 py-1 text-xs font-medium rounded-full ${getTierColor(
                         tier
                       )}`}
                     >
@@ -314,21 +314,21 @@ const CustomersShopify = () => {
 
                   <div className="mt-2 space-y-2">
                     {customer.email && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                         <Mail className="w-4 h-4" />
                         <span className="truncate">{customer.email}</span>
                       </div>
                     )}
 
                     {customer.phone && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                         <Phone className="w-4 h-4" />
                         <span>{customer.phone}</span>
                       </div>
                     )}
 
                     {customer.default_address && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                         <MapPin className="w-4 h-4" />
                         <span className="truncate">
                           {customer.default_address.city},{" "}
@@ -337,23 +337,23 @@ const CustomersShopify = () => {
                       </div>
                     )}
 
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                       <Calendar className="w-4 h-4" />
                       <span>Joined {formatDate(customer.created_at)}</span>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-gray-500">Total Spent</p>
-                        <p className="font-semibold text-gray-900">
+                        <p className="text-gray-500 dark:text-gray-400">Total Spent</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">
                           {formatCurrency(customer.total_spent)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-500">Orders</p>
-                        <p className="font-semibold text-gray-900">
+                        <p className="text-gray-500 dark:text-gray-400">Orders</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">
                           {customer.orders_count}
                         </p>
                       </div>
@@ -366,9 +366,10 @@ const CustomersShopify = () => {
         })}
 
         {sortedCustomers.length === 0 && (
-          <div className="col-span-full text-center py-12">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">No customers found</p>
+          <div className="col-span-full text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+            <Users className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <p className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-2">No customers found</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">Try adjusting your search or filters</p>
           </div>
         )}
       </div>

@@ -78,26 +78,26 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   }
 
   return (
-    <div className={`flex items-center justify-between ${className}`}>
+    <div className={`flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 ${className} p-4 bg-gray-50 dark:bg-gray-700/50`}>
       {/* Page info */}
       {showPageInfo && (
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 dark:text-gray-300 order-2 sm:order-1">
           Showing {startIndex} to {endIndex} of {totalItems} results
         </div>
       )}
 
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 order-1 sm:order-2">
         {/* Page size selector */}
         {showPageSizeSelector && onPageSizeChange && (
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Show</span>
+          <div className="flex items-center space-x-2 text-sm">
+            <span className="text-gray-600 dark:text-gray-300">Show</span>
             <select
               value={pageSize}
               onChange={(e) => {
                 onPageSizeChange(Number(e.target.value));
                 onPageChange(1); // Reset to first page when changing page size
               }}
-              className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
             >
               {pageSizeOptions.map((size) => (
                 <option key={size} value={size}>
@@ -105,20 +105,20 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
                 </option>
               ))}
             </select>
-            <span className="text-sm text-gray-600">per page</span>
+            <span className="text-gray-600 dark:text-gray-300">per page</span>
           </div>
         )}
 
         {/* Page navigation */}
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1 flex-wrap justify-center">
           {/* Previous button */}
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={!hasPreviousPage}
-            className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
-            Previous
+            <span className="hidden sm:inline">Previous</span>
           </button>
 
           {/* Page numbers */}
@@ -130,10 +130,10 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
                 disabled={typeof page === "string"}
                 className={`px-3 py-2 text-sm font-medium rounded-md ${
                   page === currentPage
-                    ? "bg-blue-600 text-white"
+                    ? "bg-primary-600 dark:bg-primary-500 text-white shadow-lg"
                     : typeof page === "string"
-                    ? "text-gray-400 cursor-default"
-                    : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                    ? "text-gray-400 dark:text-gray-500 cursor-default"
+                    : "text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
                 }`}
               >
                 {page}
@@ -145,9 +145,9 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={!hasNextPage}
-            className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
           >
-            Next
+            <span className="hidden sm:inline">Next</span>
             <ChevronRight className="w-4 h-4 ml-1" />
           </button>
         </div>
