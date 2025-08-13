@@ -31,7 +31,6 @@ import Customers from "./components/Customers";
 import CustomersShopify from "./components/CustomersShopify";
 import Fulfillment from "./components/Fulfillment";
 import Analytics from "./components/Analytics";
-import OrderManagementSystem from "./components/OrderManagementSystem";
 import ShopifyConnect from "./components/ShopifyConnect";
 import AuthCallback from "./components/AuthCallback";
 import LoadingProgress from "./components/LoadingProgress";
@@ -44,7 +43,6 @@ type Module =
   | "customers"
   | "fulfillment"
   | "analytics"
-  | "oms"
   | "settings";
 
 const navigation = [
@@ -53,7 +51,6 @@ const navigation = [
   { id: "orders", name: "Orders", icon: ShoppingCart },
   { id: "customers", name: "Customers", icon: Users },
   { id: "fulfillment", name: "Fulfillment", icon: Truck },
-  { id: "oms", name: "Order Tracking", icon: Package },
   { id: "analytics", name: "Analytics", icon: BarChart3 },
   { id: "settings", name: "Settings", icon: Settings },
 ];
@@ -164,8 +161,6 @@ const MainApp: React.FC = () => {
         return isConnected ? <CustomersShopify /> : <Customers />;
       case "fulfillment":
         return <Fulfillment />;
-      case "oms":
-        return <OrderManagementSystem />;
       case "analytics":
         return <Analytics />;
       default:
