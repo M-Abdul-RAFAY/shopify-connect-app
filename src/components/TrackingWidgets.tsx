@@ -46,6 +46,12 @@ export const TrackingStatus = ({
   const getStatusText = () => {
     if (loading) return "Loading...";
     if (error) return "Error";
+    if (isDelivered)
+      return currentStatus?.transactionStatusMessage || "Delivered";
+    if (isDeliveryFailed)
+      return currentStatus?.transactionStatusMessage || "Delivery Failed";
+    if (isInTransit)
+      return currentStatus?.transactionStatusMessage || "In Transit";
     if (currentStatus) return currentStatus.transactionStatusMessage;
     return "No tracking info";
   };

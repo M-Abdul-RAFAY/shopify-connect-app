@@ -13,11 +13,32 @@ import {
 import { usePostExTracking, usePostExOrder } from "../hooks/usePostExTracking";
 import { postexAPI } from "../services/postexAPI";
 import { useShopifyData } from "../hooks/useShopifyData";
+import { usePagination } from "../hooks/usePagination";
+import { PaginationControls } from "../utils/pagination.tsx";
 
 // Types for fulfillment structure
 interface Fulfillment {
   tracking_number?: string;
   tracking_company?: string;
+}
+
+interface OrderWithTracking {
+  id: string;
+  name?: string;
+  order_number?: string;
+  customer?: {
+    first_name?: string;
+    last_name?: string;
+  };
+  fulfillments?: Fulfillment[];
+  isDelivered?: boolean;
+  currentStatus?: {
+    transactionStatusMessage: string;
+    transactionStatusMessageCode: string;
+  };
+  total_price?: string;
+  created_at?: string;
+  [key: string]: unknown;
 }
 
 // Order Tracking Modal Component
@@ -174,29 +195,35 @@ const OrderManagementSystem = () => {
     );
   });
 
-  // Extract tracking numbers from fulfilled orders
-  const trackingNumbers = fulfilledOrdersWithTracking
-    .map((order) => {
-      // Get tracking number from fulfillments
-      const fulfillment = order.fulfillments?.find(
-        (f: Fulfillment) => f.tracking_number && f.tracking_company === "PostEx"
-      );
-      return fulfillment?.tracking_number;
-    })
-    .filter(Boolean);
-
   const {
     loading: trackingLoading,
     error: trackingError,
     getOrderWithTracking,
-    refreshTracking,
-  } = usePostExTracking(trackingNumbers);
+    trackMultipleOrders,
+  } = usePostExTracking([]); // Pass empty array to prevent auto-tracking
+
+  // Custom refresh function that tracks all tracking numbers
+  const handleRefreshTracking = async () => {
+    const trackingNumbers = fulfilledOrdersWithTracking
+      .map((order) => {
+        const fulfillment = order.fulfillments?.find(
+          (f: Fulfillment) =>
+            f.tracking_number && f.tracking_company === "PostEx"
+        );
+        return fulfillment?.tracking_number;
+      })
+      .filter(Boolean) as string[];
+
+    if (trackingNumbers.length > 0) {
+      await trackMultipleOrders(trackingNumbers);
+    }
+  };
 
   // Merge fulfilled Shopify orders with PostEx tracking data
   const ordersWithTracking = getOrderWithTracking(fulfilledOrdersWithTracking);
 
   // Helper function to get tracking number from fulfillments
-  const getTrackingNumber = (order: any) => {
+  const getTrackingNumber = (order: OrderWithTracking) => {
     const fulfillment = order.fulfillments?.find(
       (f: Fulfillment) => f.tracking_number && f.tracking_company === "PostEx"
     );
@@ -216,18 +243,22 @@ const OrderManagementSystem = () => {
       getTrackingNumber(order)?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Add pagination
+  const paginationData = usePagination(filteredOrders, 10);
+  const paginatedOrders = paginationData.items;
+
   const handleTrackOrder = (trackingNumber: string) => {
     setSelectedOrder(trackingNumber);
     setTrackingModalOpen(true);
   };
 
-  const getStatusIcon = (order: any) => {
-    if (order.isDelivered)
-      return <CheckCircle className="w-5 h-5 text-green-600" />;
+  const getStatusIcon = (order: OrderWithTracking) => {
     if (order.currentStatus) {
       const statusInfo = postexAPI.getStatusInfo(
         order.currentStatus.transactionStatusMessageCode
       );
+      if (statusInfo.type === "delivered")
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
       if (statusInfo.type === "in-transit")
         return <Truck className="w-5 h-5 text-blue-600" />;
       if (statusInfo.type === "processing")
@@ -238,28 +269,46 @@ const OrderManagementSystem = () => {
     return <Clock className="w-5 h-5 text-gray-400" />;
   };
 
-  const getStatusText = (order: any) => {
+  const getStatusText = (order: OrderWithTracking) => {
+    // If we have tracking data, check delivery status properly
     if (order.currentStatus) {
-      // Check if order is delivered
       const statusInfo = postexAPI.getStatusInfo(
         order.currentStatus.transactionStatusMessageCode
       );
+
+      // Always show the actual status message for delivered orders
       if (statusInfo.type === "delivered") {
         return order.currentStatus.transactionStatusMessage;
-      } else {
-        // If not delivered, show "Pending Shipment in Progress"
-        return "Pending Shipment in Progress";
       }
+
+      // For failed deliveries, show the actual message
+      if (statusInfo.type === "failed" || statusInfo.type === "returned") {
+        return order.currentStatus.transactionStatusMessage;
+      }
+
+      // For in-transit orders, show the actual status
+      if (statusInfo.type === "in-transit") {
+        return order.currentStatus.transactionStatusMessage;
+      }
+
+      // For processing orders, show the actual status
+      if (statusInfo.type === "processing") {
+        return order.currentStatus.transactionStatusMessage;
+      }
+
+      // Fallback: show actual status message
+      return order.currentStatus.transactionStatusMessage;
     }
-    return "Pending Shipment in Progress";
+
+    return "Click 'Refresh Tracking' for Status";
   };
 
-  const getStatusColor = (order: any) => {
-    if (order.isDelivered) return "text-green-600 bg-green-50";
+  const getStatusColor = (order: OrderWithTracking) => {
     if (order.currentStatus) {
       const statusInfo = postexAPI.getStatusInfo(
         order.currentStatus.transactionStatusMessageCode
       );
+      if (statusInfo.type === "delivered") return "text-green-600 bg-green-50";
       if (statusInfo.type === "in-transit") return "text-blue-600 bg-blue-50";
       if (statusInfo.type === "processing")
         return "text-orange-600 bg-orange-50";
@@ -298,12 +347,17 @@ const OrderManagementSystem = () => {
             Order Management System
           </h1>
           <p className="text-gray-600 mt-1">
-            Track fulfilled orders with PostEx logistics integration
+            Track fulfilled orders with PostEx logistics integration • Click
+            "Refresh Tracking" to get latest status • {filteredOrders.length}{" "}
+            orders{" "}
+            {filteredOrders.length !== ordersWithTracking.length
+              ? `(filtered from ${ordersWithTracking.length})`
+              : ""}
           </p>
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3">
           <button
-            onClick={refreshTracking}
+            onClick={handleRefreshTracking}
             disabled={trackingLoading}
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-medium"
           >
@@ -375,7 +429,7 @@ const OrderManagementSystem = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredOrders.map((order) => (
+              {paginatedOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
@@ -449,6 +503,15 @@ const OrderManagementSystem = () => {
             </div>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {filteredOrders.length > 0 && (
+          <PaginationControls
+            pagination={paginationData.pagination}
+            onPageChange={paginationData.setCurrentPage}
+            onPageSizeChange={paginationData.setPageSize}
+          />
+        )}
       </div>
 
       {/* Order Tracking Modal */}

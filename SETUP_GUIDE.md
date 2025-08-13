@@ -49,7 +49,7 @@ Configure your Shopify app credentials in `.env`:
 ```env
 VITE_SHOPIFY_APP_ID=your_shopify_app_id
 VITE_SHOPIFY_APP_SECRET=your_shopify_app_secret
-VITE_SHOPIFY_REDIRECT_URI=https://01bcd64792c3.ngrok-free.app/auth/callback
+VITE_SHOPIFY_REDIRECT_URI=https://53d8df69f208.ngrok-free.app/auth/callback
 VITE_SHOPIFY_SCOPES=read_products,read_orders,read_customers,read_inventory
 ```
 
@@ -80,8 +80,8 @@ npm run dev
 1. **Go to your Shopify Partners Dashboard**
 2. **Create a new app**
 3. **Configure OAuth settings**:
-   - **App URL**: `https://01bcd64792c3.ngrok-free.app`
-   - **Allowed redirection URL(s)**: `https://01bcd64792c3.ngrok-free.app/auth/callback`
+   - **App URL**: `https://53d8df69f208.ngrok-free.app`
+   - **Allowed redirection URL(s)**: `https://53d8df69f208.ngrok-free.app/auth/callback`
 4. **Copy your API credentials** to the `.env` file
 
 ### Required Permissions (Scopes)
