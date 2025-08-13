@@ -77,13 +77,13 @@ const MainApp: React.FC = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
-      if (!target.closest('[data-user-menu]')) {
+      if (!target.closest("[data-user-menu]")) {
         setUserMenuOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
   // Debug logging
   console.log("MainApp - Current state:", {
@@ -112,7 +112,9 @@ const MainApp: React.FC = () => {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-300">Connecting to your store...</p>
+            <p className="text-gray-600 dark:text-gray-300">
+              Connecting to your store...
+            </p>
           </div>
         </div>
       </ThemeProvider>
@@ -141,7 +143,9 @@ const MainApp: React.FC = () => {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-300">Preparing your data...</p>
+            <p className="text-gray-600 dark:text-gray-300">
+              Preparing your data...
+            </p>
           </div>
         </div>
       </ThemeProvider>
@@ -188,7 +192,9 @@ const MainApp: React.FC = () => {
           <div
             className={`
           fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-xl border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }
         `}
           >
             <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary-600 to-purple-600 dark:from-primary-700 dark:to-purple-700">
@@ -226,7 +232,9 @@ const MainApp: React.FC = () => {
                     </p>
                     <div className="flex items-center mt-1">
                       <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">Connected</span>
+                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                        Connected
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -252,9 +260,13 @@ const MainApp: React.FC = () => {
                     }
                   `}
                   >
-                    <Icon className={`w-5 h-5 mr-3 transition-transform duration-200 ${
-                      activeModule === item.id ? 'scale-110' : 'group-hover:scale-110'
-                    }`} />
+                    <Icon
+                      className={`w-5 h-5 mr-3 transition-transform duration-200 ${
+                        activeModule === item.id
+                          ? "scale-110"
+                          : "group-hover:scale-110"
+                      }`}
+                    />
                     {item.name}
                   </button>
                 );
@@ -294,7 +306,7 @@ const MainApp: React.FC = () => {
                   >
                     <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                   </button>
-                
+
                   {/* Search Bar - Responsive */}
                   <div className="hidden sm:flex items-center ml-4 flex-1 max-w-md xl:max-w-lg">
                     <div className="relative w-full">
@@ -342,7 +354,11 @@ const MainApp: React.FC = () => {
                         </div>
                       </div>
 
-                      <ChevronDown className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
+                          userMenuOpen ? "rotate-180" : ""
+                        }`}
+                      />
                     </button>
 
                     {/* User Dropdown Menu */}
@@ -385,9 +401,7 @@ const MainApp: React.FC = () => {
 
             {/* Main content area */}
             <main className="flex-1 p-4 lg:p-6 overflow-auto bg-gray-50 dark:bg-gray-900 min-h-0">
-              <div className="animate-fade-in">
-                {renderModule()}
-              </div>
+              <div className="animate-fade-in">{renderModule()}</div>
             </main>
           </div>
         </div>
