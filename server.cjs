@@ -243,12 +243,10 @@ app.get("/api/cached/products", async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Cached products fetch error:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to fetch cached products",
-        details: error.message,
-      });
+    res.status(500).json({
+      error: "Failed to fetch cached products",
+      details: error.message,
+    });
   }
 });
 
@@ -330,12 +328,10 @@ app.get("/api/cached/customers", async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Cached customers fetch error:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to fetch cached customers",
-        details: error.message,
-      });
+    res.status(500).json({
+      error: "Failed to fetch cached customers",
+      details: error.message,
+    });
   }
 });
 

@@ -187,7 +187,9 @@ export const ShopifyProvider: React.FC<ShopifyProviderProps> = ({
       const accessToken = shopifyAPI.getAccessToken();
 
       if (!shopDomain || !accessToken) {
-        console.error("Missing shop domain or access token for comprehensive sync");
+        console.error(
+          "Missing shop domain or access token for comprehensive sync"
+        );
         return;
       }
 
@@ -230,7 +232,9 @@ export const ShopifyProvider: React.FC<ShopifyProviderProps> = ({
       const accessToken = shopifyAPI.getAccessToken();
 
       if (!shopDomain || !accessToken) {
-        console.error("Missing shop domain or access token for fetch and store");
+        console.error(
+          "Missing shop domain or access token for fetch and store"
+        );
         return;
       }
 
