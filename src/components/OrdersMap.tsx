@@ -10,8 +10,8 @@ declare global {
 }
 
 interface ShopifyOrder {
-  id: string;
-  name: string;
+  id: number;
+  name?: string;
   total_price: string;
   shipping_address?: {
     city?: string;
@@ -23,6 +23,7 @@ interface ShopifyOrder {
 
 interface OrdersMapProps {
   orders: ShopifyOrder[];
+  focusCity?: string;
 }
 
 // City coordinates mapping
@@ -82,9 +83,11 @@ const cityCoordinates: { [key: string]: { lat: number; lng: number } } = {
   Wazirabad: { lat: 32.4428, lng: 74.1231 },
 };
 
-const OrdersMap: React.FC<OrdersMapProps> = ({ orders }) => {
+const OrdersMap: React.FC<OrdersMapProps> = ({ orders, focusCity }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<{ [city: string]: google.maps.Marker }>({});
+  const infoWindowsRef = useRef<{ [city: string]: google.maps.InfoWindow }>({});
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -156,6 +159,10 @@ const OrdersMap: React.FC<OrdersMapProps> = ({ orders }) => {
 
       mapInstanceRef.current = map;
 
+      // Clear previous markers and info windows
+      markersRef.current = {};
+      infoWindowsRef.current = {};
+
       // Add markers for each city
       cityData.forEach(({ city, count, coordinates, orders }) => {
         if (coordinates) {
@@ -172,6 +179,12 @@ const OrdersMap: React.FC<OrdersMapProps> = ({ orders }) => {
               strokeWeight: 2,
             },
           });
+
+          // Store order count for later use
+          marker.set("orderCount", count);
+
+          // Store marker reference
+          markersRef.current[city] = marker;
 
           // Create info window
           const totalRevenue = orders.reduce(
@@ -195,7 +208,13 @@ const OrdersMap: React.FC<OrdersMapProps> = ({ orders }) => {
             `,
           });
 
+          // Store info window reference
+          infoWindowsRef.current[city] = infoWindow;
+
           marker.addListener("click", () => {
+            // Close all other info windows
+            Object.values(infoWindowsRef.current).forEach((iw) => iw.close());
+            // Open this info window
             infoWindow.open(map, marker);
           });
         }
@@ -205,6 +224,50 @@ const OrdersMap: React.FC<OrdersMapProps> = ({ orders }) => {
       setError("Failed to initialize map");
     }
   }, [isLoaded, cityData]);
+
+  // Handle focusing on a specific city
+  useEffect(() => {
+    if (!focusCity || !mapInstanceRef.current || !markersRef.current[focusCity])
+      return;
+
+    const marker = markersRef.current[focusCity];
+    const infoWindow = infoWindowsRef.current[focusCity];
+    const map = mapInstanceRef.current;
+
+    // Close all info windows
+    Object.values(infoWindowsRef.current).forEach((iw) => iw.close());
+
+    // Reset all markers to normal style
+    Object.values(markersRef.current).forEach((m) => {
+      m.setIcon({
+        path: window.google.maps.SymbolPath.CIRCLE,
+        scale: Math.max(8, Math.min(20, m.get("orderCount") * 2)),
+        fillColor: "#3B82F6",
+        fillOpacity: 0.8,
+        strokeColor: "#1E40AF",
+        strokeWeight: 2,
+      });
+    });
+
+    // Highlight the focused marker
+    marker.setIcon({
+      path: window.google.maps.SymbolPath.CIRCLE,
+      scale: Math.max(12, Math.min(24, marker.get("orderCount") * 2)),
+      fillColor: "#EF4444",
+      fillOpacity: 0.9,
+      strokeColor: "#DC2626",
+      strokeWeight: 3,
+    });
+
+    // Focus on the city
+    map.setCenter(marker.getPosition() as google.maps.LatLng);
+    map.setZoom(10);
+
+    // Open the info window
+    if (infoWindow) {
+      infoWindow.open(map, marker);
+    }
+  }, [focusCity]);
 
   if (error) {
     return (

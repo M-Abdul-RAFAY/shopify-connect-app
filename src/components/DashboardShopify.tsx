@@ -18,11 +18,13 @@ import { useShopify } from "../contexts/ShopifyContext";
 import { formatCurrencyWithShop } from "../utils/currency";
 import OrdersMap from "./OrdersMap";
 import CityList from "./CityList";
+import { useState } from "react";
 
 const Dashboard = () => {
   const { data, loading, error } = useShopifyData();
   const { setActiveModule } = useNavigation();
   const { shopData } = useShopify();
+  const [focusedCity, setFocusedCity] = useState<string | undefined>(undefined);
 
   if (loading) {
     return (
@@ -728,7 +730,7 @@ const Dashboard = () => {
               </p>
             </div>
 
-            <OrdersMap orders={orders} height="300px" />
+            <OrdersMap orders={orders} focusCity={focusedCity} />
           </div>
 
           {/* Orders by City */}
@@ -736,7 +738,12 @@ const Dashboard = () => {
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
               Orders by City
             </h3>
-            <CityList orders={orders} />
+            <CityList
+              orders={orders}
+              onCityClick={setFocusedCity}
+              shopData={shopData}
+              formatCurrency={formatCurrencyWithShop}
+            />
           </div>
         </div>
       </div>

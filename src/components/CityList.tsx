@@ -1,6 +1,12 @@
 import React, { useMemo } from "react";
 import { Activity, MapPin, Users, DollarSign } from "lucide-react";
 
+interface ShopifyStore {
+  currency: string;
+  money_format?: string;
+  [key: string]: unknown;
+}
+
 interface Order {
   id: string | number;
   name?: string;
@@ -22,6 +28,12 @@ interface Order {
 interface CityListProps {
   orders: Order[];
   height?: string;
+  onCityClick?: (city: string) => void;
+  shopData?: ShopifyStore | null;
+  formatCurrency?: (
+    amount: string | number,
+    shopData?: ShopifyStore | null
+  ) => string;
 }
 
 interface CityData {
@@ -33,7 +45,13 @@ interface CityData {
 }
 
 // Simple city-based order list (no map, no toggle)
-const CityList: React.FC<CityListProps> = ({ orders, height = "400px" }) => {
+const CityList: React.FC<CityListProps> = ({
+  orders,
+  height = "400px",
+  onCityClick,
+  shopData,
+  formatCurrency,
+}) => {
   // Group orders by city
   const cityData = useMemo(() => {
     const cityMap: { [key: string]: CityData } = {};
@@ -112,7 +130,9 @@ const CityList: React.FC<CityListProps> = ({ orders, height = "400px" }) => {
           {cityData.map((city, index) => (
             <div
               key={`${city.city}-${city.country}`}
-              className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-colors"
+              className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-colors cursor-pointer"
+              onClick={() => onCityClick && onCityClick(city.city)}
+              title={`Click to view ${city.city} on map`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -165,7 +185,9 @@ const CityList: React.FC<CityListProps> = ({ orders, height = "400px" }) => {
                     <div className="flex items-center justify-center">
                       <DollarSign className="w-4 h-4 text-green-600 mr-1" />
                       <span className="text-lg font-bold text-gray-900 dark:text-white">
-                        ${city.totalRevenue.toFixed(0)}
+                        {formatCurrency
+                          ? formatCurrency(city.totalRevenue, shopData)
+                          : `$${city.totalRevenue.toFixed(2)}`}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
