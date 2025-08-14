@@ -8,7 +8,7 @@ const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 interface Order {
   id: string | number;
   name?: string;
-  order_number?: string;
+  order_number?: string | number;
   shipping_address?: {
     city?: string;
     country?: string;
