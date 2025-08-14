@@ -17,6 +17,7 @@ import { useNavigation } from "../contexts/NavigationContext";
 import { useShopify } from "../contexts/ShopifyContext";
 import { formatCurrencyWithShop } from "../utils/currency";
 import OrdersMap from "./OrdersMap";
+import CityList from "./CityList";
 
 const Dashboard = () => {
   const { data, loading, error } = useShopifyData();
@@ -730,89 +731,12 @@ const Dashboard = () => {
             <OrdersMap orders={orders} height="300px" />
           </div>
 
-          {/* Location Statistics */}
-          <div className="space-y-4">
-            <h4 className="text-md font-semibold text-gray-900 dark:text-white">
-              Top Locations
-            </h4>
-            {(() => {
-              // Analyze real order data for geographic distribution
-              const locationData: {
-                [key: string]: {
-                  orders: number;
-                  revenue: number;
-                  country: string;
-                };
-              } = {};
-
-              orders.forEach((order) => {
-                if (order.shipping_address) {
-                  const city = order.shipping_address.city || "Unknown";
-                  const country = order.shipping_address.country || "Unknown";
-                  const key = `${city}, ${country}`;
-                  const revenue = parseFloat(order.total_price || "0");
-
-                  if (!locationData[key]) {
-                    locationData[key] = { orders: 0, revenue: 0, country };
-                  }
-
-                  locationData[key].orders += 1;
-                  locationData[key].revenue += revenue;
-                }
-              });
-
-              // Sort by revenue and get top 5
-              const topLocations = Object.entries(locationData)
-                .map(([location, data]) => ({
-                  city: location.split(",")[0].trim(),
-                  country: data.country,
-                  orders: data.orders,
-                  revenue: data.revenue,
-                }))
-                .sort((a, b) => b.revenue - a.revenue)
-                .slice(0, 5);
-
-              if (topLocations.length === 0) {
-                return (
-                  <div className="text-center py-8">
-                    <MapPin className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      No location data available
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                      Orders with shipping addresses will appear here
-                    </p>
-                  </div>
-                );
-              }
-
-              return topLocations.map((location, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {location.city}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {location.country}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">
-                      {location.orders} orders
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {formatCurrencyWithShop(location.revenue, shopData)}
-                    </p>
-                  </div>
-                </div>
-              ));
-            })()}
+          {/* Orders by City */}
+          <div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+              Orders by City
+            </h3>
+            <CityList orders={orders} />
           </div>
         </div>
       </div>
