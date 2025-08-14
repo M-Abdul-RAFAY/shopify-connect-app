@@ -7,7 +7,7 @@ require("dotenv").config();
 const dbConnection = require("./config/database.cjs");
 const syncService = require("./services/syncService.cjs");
 const cachedDataRoutes = require("./routes/cachedDataRoutes.cjs");
-const { Shop } = require("./models/shopifyModels.cjs");
+const { Shop, Order, Product, Customer } = require("./models/shopifyModels.cjs");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -73,6 +73,211 @@ app.get("/api/db-health", async (req, res) => {
 // Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK", message: "Shopify backend server is running" });
+});
+
+// Cached data endpoints - fetch from database
+app.get("/api/cached/orders", async (req, res) => {
+  try {
+    const { shop, page = 1, limit = 50, search, financial_status, fulfillment_status, date_from, date_to, sort = 'created_at', order = 'desc' } = req.query;
+    
+    if (!shop) {
+      return res.status(400).json({ error: "Shop domain is required" });
+    }
+
+    // Build MongoDB query
+    let query = { shopDomain: shop };
+    
+    // Add filters
+    if (search) {
+      query.$or = [
+        { orderNumber: { $regex: search, $options: 'i' } },
+        { 'customer.email': { $regex: search, $options: 'i' } },
+        { 'customer.firstName': { $regex: search, $options: 'i' } },
+        { 'customer.lastName': { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (financial_status) query.financialStatus = financial_status;
+    if (fulfillment_status) query.fulfillmentStatus = fulfillment_status;
+    
+    if (date_from || date_to) {
+      query.createdAt = {};
+      if (date_from) query.createdAt.$gte = new Date(date_from);
+      if (date_to) query.createdAt.$lte = new Date(date_to);
+    }
+
+    // Calculate pagination
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Get total count
+    const totalCount = await Order.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    // Build sort object
+    const sortObj = {};
+    sortObj[sort] = order === 'desc' ? -1 : 1;
+
+    // Fetch orders
+    const orders = await Order.find(query)
+      .sort(sortObj)
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+
+    // Calculate analytics
+    const analytics = {
+      total_revenue: orders.reduce((sum, order) => sum + parseFloat(order.totalPrice || 0), 0),
+      order_count: orders.length,
+      average_order_value: orders.length > 0 ? orders.reduce((sum, order) => sum + parseFloat(order.totalPrice || 0), 0) / orders.length : 0
+    };
+
+    res.json({
+      orders,
+      pagination: {
+        current_page: pageNum,
+        total_pages: totalPages,
+        total_count: totalCount,
+        per_page: limitNum,
+      },
+      analytics,
+      source: "database"
+    });
+  } catch (error) {
+    console.error("❌ Cached orders fetch error:", error);
+    res.status(500).json({ error: "Failed to fetch cached orders", details: error.message });
+  }
+});
+
+app.get("/api/cached/products", async (req, res) => {
+  try {
+    const { shop, page = 1, limit = 50, search, product_type, vendor, status, sort = 'created_at', order = 'desc' } = req.query;
+    
+    if (!shop) {
+      return res.status(400).json({ error: "Shop domain is required" });
+    }
+
+    // Build MongoDB query
+    let query = { shopDomain: shop };
+    
+    // Add filters
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { vendor: { $regex: search, $options: 'i' } },
+        { productType: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (product_type) query.productType = product_type;
+    if (vendor) query.vendor = vendor;
+    if (status) query.status = status;
+
+    // Calculate pagination
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Get total count
+    const totalCount = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    // Build sort object
+    const sortObj = {};
+    sortObj[sort] = order === 'desc' ? -1 : 1;
+
+    // Fetch products
+    const products = await Product.find(query)
+      .sort(sortObj)
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+
+    res.json({
+      products,
+      pagination: {
+        current_page: pageNum,
+        total_pages: totalPages,
+        total_count: totalCount,
+        per_page: limitNum,
+      },
+      source: "database"
+    });
+  } catch (error) {
+    console.error("❌ Cached products fetch error:", error);
+    res.status(500).json({ error: "Failed to fetch cached products", details: error.message });
+  }
+});
+
+app.get("/api/cached/customers", async (req, res) => {
+  try {
+    const { shop, page = 1, limit = 50, search, state, min_orders, max_orders, min_spent, max_spent, sort = 'created_at', order = 'desc' } = req.query;
+    
+    if (!shop) {
+      return res.status(400).json({ error: "Shop domain is required" });
+    }
+
+    // Build MongoDB query
+    let query = { shopDomain: shop };
+    
+    // Add filters
+    if (search) {
+      query.$or = [
+        { email: { $regex: search, $options: 'i' } },
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (state) query.state = state;
+    
+    if (min_orders || max_orders) {
+      query.ordersCount = {};
+      if (min_orders) query.ordersCount.$gte = parseInt(min_orders);
+      if (max_orders) query.ordersCount.$lte = parseInt(max_orders);
+    }
+    
+    if (min_spent || max_spent) {
+      query.totalSpent = {};
+      if (min_spent) query.totalSpent.$gte = parseFloat(min_spent);
+      if (max_spent) query.totalSpent.$lte = parseFloat(max_spent);
+    }
+
+    // Calculate pagination
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Get total count
+    const totalCount = await Customer.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    // Build sort object
+    const sortObj = {};
+    sortObj[sort] = order === 'desc' ? -1 : 1;
+
+    // Fetch customers
+    const customers = await Customer.find(query)
+      .sort(sortObj)
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+
+    res.json({
+      customers,
+      pagination: {
+        current_page: pageNum,
+        total_pages: totalPages,
+        total_count: totalCount,
+        per_page: limitNum,
+      },
+      source: "database"
+    });
+  } catch (error) {
+    console.error("❌ Cached customers fetch error:", error);
+    res.status(500).json({ error: "Failed to fetch cached customers", details: error.message });
+  }
 });
 
 // Store used authorization codes to prevent reuse
@@ -448,10 +653,10 @@ app.all("/api/shopify/proxy/*", async (req, res) => {
   }
 });
 
-// Fresh data endpoints for real-time service
+// Fresh data endpoints for real-time service with limited pagination (recent data only)
 app.get("/api/shopify/fresh-orders", async (req, res) => {
   try {
-    const { shop, accessToken } = req.query;
+    const { shop, accessToken, limit_pages = "5" } = req.query; // Default to 5 pages max
 
     if (!shop || !accessToken) {
       return res.status(400).json({
@@ -465,20 +670,53 @@ app.get("/api/shopify/fresh-orders", async (req, res) => {
       fullShopDomain = `${shop}.myshopify.com`;
     }
 
-    console.log(`🔄 Fetching fresh orders for ${fullShopDomain}...`);
-    const url = `https://${fullShopDomain}/admin/api/2024-07/orders.json?status=any&limit=250&order=created_at desc`;
+    const maxPages = parseInt(limit_pages) || 5;
+    console.log(`🔄 Fetching recent orders for ${fullShopDomain} (max ${maxPages} pages)...`);
+    
+    let allOrders = [];
+    let hasNextPage = true;
+    let pageInfo = null;
+    let currentPage = 0;
 
-    const response = await axios.get(url, {
-      headers: {
-        "X-Shopify-Access-Token": accessToken,
-        "Content-Type": "application/json",
-      },
-    });
+    while (hasNextPage && currentPage < maxPages) {
+      let url = `https://${fullShopDomain}/admin/api/2024-07/orders.json?limit=250`;
+      
+      if (pageInfo) {
+        // When using page_info, only limit is allowed
+        url = `https://${fullShopDomain}/admin/api/2024-07/orders.json?limit=250&page_info=${pageInfo}`;
+      } else {
+        // First page can have all parameters
+        url = `https://${fullShopDomain}/admin/api/2024-07/orders.json?status=any&limit=250&order=created_at desc`;
+      }
 
-    console.log(
-      `📦 Fresh orders fetched: ${response.data.orders?.length || 0} orders`
-    );
-    res.json({ orders: response.data.orders || [] });
+      const response = await axios.get(url, {
+        headers: {
+          "X-Shopify-Access-Token": accessToken,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const orders = response.data.orders || [];
+      allOrders = allOrders.concat(orders);
+      currentPage++;
+      
+      console.log(`📦 Fetched page ${currentPage}: ${orders.length} orders (Total: ${allOrders.length})`);
+
+      // Check for pagination info in Link header
+      const linkHeader = response.headers.link;
+      if (linkHeader && linkHeader.includes('rel="next"') && currentPage < maxPages) {
+        const match = linkHeader.match(/page_info=([^&>]+)/);
+        pageInfo = match ? match[1] : null;
+      } else {
+        hasNextPage = false;
+      }
+
+      // Rate limiting delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    console.log(`✅ Recent orders fetched: ${allOrders.length} orders total (${currentPage} pages)`);
+    res.json({ orders: allOrders });
   } catch (error) {
     console.error(
       "❌ Fresh orders fetch failed:",
@@ -493,7 +731,7 @@ app.get("/api/shopify/fresh-orders", async (req, res) => {
 
 app.get("/api/shopify/fresh-products", async (req, res) => {
   try {
-    const { shop, accessToken } = req.query;
+    const { shop, accessToken, limit_pages = "3" } = req.query; // Default to 3 pages max for products
 
     if (!shop || !accessToken) {
       return res.status(400).json({
@@ -507,22 +745,50 @@ app.get("/api/shopify/fresh-products", async (req, res) => {
       fullShopDomain = `${shop}.myshopify.com`;
     }
 
-    console.log(`🔄 Fetching fresh products for ${fullShopDomain}...`);
-    const url = `https://${fullShopDomain}/admin/api/2024-07/products.json?limit=250`;
+    const maxPages = parseInt(limit_pages) || 3;
+    console.log(`🔄 Fetching recent products for ${fullShopDomain} (max ${maxPages} pages)...`);
+    
+    let allProducts = [];
+    let hasNextPage = true;
+    let pageInfo = null;
+    let currentPage = 0;
 
-    const response = await axios.get(url, {
-      headers: {
-        "X-Shopify-Access-Token": accessToken,
-        "Content-Type": "application/json",
-      },
-    });
+    while (hasNextPage && currentPage < maxPages) {
+      let url = `https://${fullShopDomain}/admin/api/2024-07/products.json?limit=250`;
+      
+      if (pageInfo) {
+        // When using page_info, only limit is allowed
+        url = `https://${fullShopDomain}/admin/api/2024-07/products.json?limit=250&page_info=${pageInfo}`;
+      }
 
-    console.log(
-      `📦 Fresh products fetched: ${
-        response.data.products?.length || 0
-      } products`
-    );
-    res.json({ products: response.data.products || [] });
+      const response = await axios.get(url, {
+        headers: {
+          "X-Shopify-Access-Token": accessToken,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const products = response.data.products || [];
+      allProducts = allProducts.concat(products);
+      currentPage++;
+      
+      console.log(`📦 Fetched page ${currentPage}: ${products.length} products (Total: ${allProducts.length})`);
+
+      // Check for pagination info in Link header
+      const linkHeader = response.headers.link;
+      if (linkHeader && linkHeader.includes('rel="next"') && currentPage < maxPages) {
+        const match = linkHeader.match(/page_info=([^&>]+)/);
+        pageInfo = match ? match[1] : null;
+      } else {
+        hasNextPage = false;
+      }
+
+      // Rate limiting delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    console.log(`✅ Recent products fetched: ${allProducts.length} products total (${currentPage} pages)`);
+    res.json({ products: allProducts });
   } catch (error) {
     console.error(
       "❌ Fresh products fetch failed:",
@@ -537,7 +803,7 @@ app.get("/api/shopify/fresh-products", async (req, res) => {
 
 app.get("/api/shopify/fresh-customers", async (req, res) => {
   try {
-    const { shop, accessToken } = req.query;
+    const { shop, accessToken, limit_pages = "3" } = req.query; // Default to 3 pages max for customers
 
     if (!shop || !accessToken) {
       return res.status(400).json({
@@ -551,22 +817,50 @@ app.get("/api/shopify/fresh-customers", async (req, res) => {
       fullShopDomain = `${shop}.myshopify.com`;
     }
 
-    console.log(`🔄 Fetching fresh customers for ${fullShopDomain}...`);
-    const url = `https://${fullShopDomain}/admin/api/2024-07/customers.json?limit=250`;
+    const maxPages = parseInt(limit_pages) || 3;
+    console.log(`🔄 Fetching recent customers for ${fullShopDomain} (max ${maxPages} pages)...`);
+    
+    let allCustomers = [];
+    let hasNextPage = true;
+    let pageInfo = null;
+    let currentPage = 0;
 
-    const response = await axios.get(url, {
-      headers: {
-        "X-Shopify-Access-Token": accessToken,
-        "Content-Type": "application/json",
-      },
-    });
+    while (hasNextPage && currentPage < maxPages) {
+      let url = `https://${fullShopDomain}/admin/api/2024-07/customers.json?limit=250`;
+      
+      if (pageInfo) {
+        // When using page_info, only limit is allowed
+        url = `https://${fullShopDomain}/admin/api/2024-07/customers.json?limit=250&page_info=${pageInfo}`;
+      }
 
-    console.log(
-      `📦 Fresh customers fetched: ${
-        response.data.customers?.length || 0
-      } customers`
-    );
-    res.json({ customers: response.data.customers || [] });
+      const response = await axios.get(url, {
+        headers: {
+          "X-Shopify-Access-Token": accessToken,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const customers = response.data.customers || [];
+      allCustomers = allCustomers.concat(customers);
+      currentPage++;
+      
+      console.log(`📦 Fetched page ${currentPage}: ${customers.length} customers (Total: ${allCustomers.length})`);
+
+      // Check for pagination info in Link header
+      const linkHeader = response.headers.link;
+      if (linkHeader && linkHeader.includes('rel="next"') && currentPage < maxPages) {
+        const match = linkHeader.match(/page_info=([^&>]+)/);
+        pageInfo = match ? match[1] : null;
+      } else {
+        hasNextPage = false;
+      }
+
+      // Rate limiting delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    console.log(`✅ Recent customers fetched: ${allCustomers.length} customers total (${currentPage} pages)`);
+    res.json({ customers: allCustomers });
   } catch (error) {
     console.error(
       "❌ Fresh customers fetch failed:",
@@ -575,6 +869,503 @@ app.get("/api/shopify/fresh-customers", async (req, res) => {
     res.status(500).json({
       error: "Failed to fetch fresh customers",
       details: error.response?.data || error.message,
+    });
+  }
+});
+
+// Comprehensive sync system - Fetches ALL data and stores in DB with deduplication
+app.post("/api/shopify/comprehensive-sync", async (req, res) => {
+  try {
+    const { shop, accessToken } = req.body;
+
+    if (!shop || !accessToken) {
+      return res.status(400).json({
+        error: "Missing required parameters: shop and accessToken",
+      });
+    }
+
+    // Ensure we're using the full .myshopify.com domain
+    let fullShopDomain = shop;
+    if (!shop.includes(".myshopify.com")) {
+      fullShopDomain = `${shop}.myshopify.com`;
+    }
+
+    console.log(`🚀 Starting comprehensive sync for ${fullShopDomain}...`);
+
+    const syncResults = {
+      orders: { total: 0, new: 0, updated: 0, errors: 0 },
+      products: { total: 0, new: 0, updated: 0, errors: 0 },
+      customers: { total: 0, new: 0, updated: 0, errors: 0 },
+      startTime: new Date(),
+      endTime: null,
+      status: 'running'
+    };
+
+    // Step 1: Sync Orders
+    console.log(`📦 Step 1: Syncing ALL orders...`);
+    try {
+      let allOrders = [];
+      let hasNextPage = true;
+      let pageInfo = null;
+      let pageCount = 0;
+
+      while (hasNextPage) {
+        pageCount++;
+        let url = `https://${fullShopDomain}/admin/api/2024-07/orders.json?limit=250`;
+        
+        if (pageInfo) {
+          url = `https://${fullShopDomain}/admin/api/2024-07/orders.json?limit=250&page_info=${pageInfo}`;
+        } else {
+          url = `https://${fullShopDomain}/admin/api/2024-07/orders.json?status=any&limit=250&order=created_at desc`;
+        }
+
+        const response = await axios.get(url, {
+          headers: {
+            "X-Shopify-Access-Token": accessToken,
+            "Content-Type": "application/json",
+          },
+        });
+
+        const orders = response.data.orders || [];
+        allOrders = allOrders.concat(orders);
+        
+        console.log(`📦 Orders page ${pageCount}: ${orders.length} orders (Total: ${allOrders.length})`);
+
+        // Check for pagination
+        const linkHeader = response.headers.link;
+        if (linkHeader && linkHeader.includes('rel="next"')) {
+          const match = linkHeader.match(/page_info=([^&>]+)/);
+          pageInfo = match ? match[1] : null;
+        } else {
+          hasNextPage = false;
+        }
+
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      syncResults.orders.total = allOrders.length;
+
+      // Store orders in database with deduplication
+      for (const order of allOrders) {
+        try {
+          const existingOrder = await Order.findOne({ 
+            orderId: order.id, 
+            shopDomain: fullShopDomain 
+          });
+
+          if (existingOrder) {
+            // Update existing order if it has been modified
+            if (new Date(order.updated_at) > new Date(existingOrder.updated_at)) {
+              await Order.updateOne(
+                { orderId: order.id, shopDomain: fullShopDomain },
+                {
+                  orderId: order.id,
+                  shopDomain: fullShopDomain,
+                  name: order.name,
+                  email: order.email,
+                  total_price: order.total_price,
+                  financial_status: order.financial_status,
+                  fulfillment_status: order.fulfillment_status,
+                  created_at: order.created_at,
+                  updated_at: order.updated_at,
+                  line_items: order.line_items,
+                  customer: order.customer,
+                  shipping_address: order.shipping_address,
+                  billing_address: order.billing_address,
+                  raw_data: order
+                }
+              );
+              syncResults.orders.updated++;
+            }
+          } else {
+            // Create new order
+            await Order.create({
+              orderId: order.id,
+              shopDomain: fullShopDomain,
+              name: order.name,
+              email: order.email,
+              total_price: order.total_price,
+              financial_status: order.financial_status,
+              fulfillment_status: order.fulfillment_status,
+              created_at: order.created_at,
+              updated_at: order.updated_at,
+              line_items: order.line_items,
+              customer: order.customer,
+              shipping_address: order.shipping_address,
+              billing_address: order.billing_address,
+              raw_data: order
+            });
+            syncResults.orders.new++;
+          }
+        } catch (err) {
+          console.error(`Error storing order ${order.id}:`, err.message);
+          syncResults.orders.errors++;
+        }
+      }
+    } catch (error) {
+      console.error("❌ Orders sync failed:", error.message);
+      syncResults.orders.errors++;
+    }
+
+    // Step 2: Sync Products
+    console.log(`📦 Step 2: Syncing ALL products...`);
+    try {
+      let allProducts = [];
+      let hasNextPage = true;
+      let pageInfo = null;
+      let pageCount = 0;
+
+      while (hasNextPage) {
+        pageCount++;
+        let url = `https://${fullShopDomain}/admin/api/2024-07/products.json?limit=250`;
+        
+        if (pageInfo) {
+          url = `https://${fullShopDomain}/admin/api/2024-07/products.json?limit=250&page_info=${pageInfo}`;
+        }
+
+        const response = await axios.get(url, {
+          headers: {
+            "X-Shopify-Access-Token": accessToken,
+            "Content-Type": "application/json",
+          },
+        });
+
+        const products = response.data.products || [];
+        allProducts = allProducts.concat(products);
+        
+        console.log(`📦 Products page ${pageCount}: ${products.length} products (Total: ${allProducts.length})`);
+
+        // Check for pagination
+        const linkHeader = response.headers.link;
+        if (linkHeader && linkHeader.includes('rel="next"')) {
+          const match = linkHeader.match(/page_info=([^&>]+)/);
+          pageInfo = match ? match[1] : null;
+        } else {
+          hasNextPage = false;
+        }
+
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      syncResults.products.total = allProducts.length;
+
+      // Store products in database with deduplication
+      for (const product of allProducts) {
+        try {
+          const existingProduct = await Product.findOne({ 
+            productId: product.id, 
+            shopDomain: fullShopDomain 
+          });
+
+          if (existingProduct) {
+            // Update existing product if it has been modified
+            if (new Date(product.updated_at) > new Date(existingProduct.updated_at)) {
+              await Product.updateOne(
+                { productId: product.id, shopDomain: fullShopDomain },
+                {
+                  productId: product.id,
+                  shopDomain: fullShopDomain,
+                  title: product.title,
+                  vendor: product.vendor,
+                  product_type: product.product_type,
+                  status: product.status,
+                  created_at: product.created_at,
+                  updated_at: product.updated_at,
+                  variants: product.variants,
+                  images: product.images,
+                  raw_data: product
+                }
+              );
+              syncResults.products.updated++;
+            }
+          } else {
+            // Create new product
+            await Product.create({
+              productId: product.id,
+              shopDomain: fullShopDomain,
+              title: product.title,
+              vendor: product.vendor,
+              product_type: product.product_type,
+              status: product.status,
+              created_at: product.created_at,
+              updated_at: product.updated_at,
+              variants: product.variants,
+              images: product.images,
+              raw_data: product
+            });
+            syncResults.products.new++;
+          }
+        } catch (err) {
+          console.error(`Error storing product ${product.id}:`, err.message);
+          syncResults.products.errors++;
+        }
+      }
+    } catch (error) {
+      console.error("❌ Products sync failed:", error.message);
+      syncResults.products.errors++;
+    }
+
+    // Step 3: Sync Customers
+    console.log(`📦 Step 3: Syncing ALL customers...`);
+    try {
+      let allCustomers = [];
+      let hasNextPage = true;
+      let pageInfo = null;
+      let pageCount = 0;
+
+      while (hasNextPage) {
+        pageCount++;
+        let url = `https://${fullShopDomain}/admin/api/2024-07/customers.json?limit=250`;
+        
+        if (pageInfo) {
+          url = `https://${fullShopDomain}/admin/api/2024-07/customers.json?limit=250&page_info=${pageInfo}`;
+        }
+
+        const response = await axios.get(url, {
+          headers: {
+            "X-Shopify-Access-Token": accessToken,
+            "Content-Type": "application/json",
+          },
+        });
+
+        const customers = response.data.customers || [];
+        allCustomers = allCustomers.concat(customers);
+        
+        console.log(`📦 Customers page ${pageCount}: ${customers.length} customers (Total: ${allCustomers.length})`);
+
+        // Check for pagination
+        const linkHeader = response.headers.link;
+        if (linkHeader && linkHeader.includes('rel="next"')) {
+          const match = linkHeader.match(/page_info=([^&>]+)/);
+          pageInfo = match ? match[1] : null;
+        } else {
+          hasNextPage = false;
+        }
+
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      syncResults.customers.total = allCustomers.length;
+
+      // Store customers in database with deduplication
+      for (const customer of allCustomers) {
+        try {
+          const existingCustomer = await Customer.findOne({ 
+            customerId: customer.id, 
+            shopDomain: fullShopDomain 
+          });
+
+          if (existingCustomer) {
+            // Update existing customer if it has been modified
+            if (new Date(customer.updated_at) > new Date(existingCustomer.updated_at)) {
+              await Customer.updateOne(
+                { customerId: customer.id, shopDomain: fullShopDomain },
+                {
+                  customerId: customer.id,
+                  shopDomain: fullShopDomain,
+                  first_name: customer.first_name,
+                  last_name: customer.last_name,
+                  email: customer.email,
+                  phone: customer.phone,
+                  created_at: customer.created_at,
+                  updated_at: customer.updated_at,
+                  state: customer.state,
+                  total_spent: customer.total_spent,
+                  orders_count: customer.orders_count,
+                  addresses: customer.addresses,
+                  raw_data: customer
+                }
+              );
+              syncResults.customers.updated++;
+            }
+          } else {
+            // Create new customer
+            await Customer.create({
+              customerId: customer.id,
+              shopDomain: fullShopDomain,
+              first_name: customer.first_name,
+              last_name: customer.last_name,
+              email: customer.email,
+              phone: customer.phone,
+              created_at: customer.created_at,
+              updated_at: customer.updated_at,
+              state: customer.state,
+              total_spent: customer.total_spent,
+              orders_count: customer.orders_count,
+              addresses: customer.addresses,
+              raw_data: customer
+            });
+            syncResults.customers.new++;
+          }
+        } catch (err) {
+          console.error(`Error storing customer ${customer.id}:`, err.message);
+          syncResults.customers.errors++;
+        }
+      }
+    } catch (error) {
+      console.error("❌ Customers sync failed:", error.message);
+      syncResults.customers.errors++;
+    }
+
+    syncResults.endTime = new Date();
+    syncResults.status = 'completed';
+    
+    const totalTime = (syncResults.endTime - syncResults.startTime) / 1000;
+    console.log(`✅ Comprehensive sync completed in ${totalTime}s:`, syncResults);
+
+    res.json({
+      success: true,
+      message: "Comprehensive sync completed successfully",
+      results: syncResults
+    });
+
+  } catch (error) {
+    console.error("❌ Comprehensive sync failed:", error.message);
+    res.status(500).json({
+      error: "Failed to complete comprehensive sync",
+      details: error.message,
+    });
+  }
+});
+
+// Endpoint to fetch fresh data and store it in database
+app.post("/api/shopify/fetch-and-store-all", async (req, res) => {
+  try {
+    const { shop, accessToken } = req.body;
+
+    if (!shop || !accessToken) {
+      return res.status(400).json({
+        error: "Missing required parameters: shop and accessToken",
+      });
+    }
+
+    // Ensure we're using the full .myshopify.com domain
+    let fullShopDomain = shop;
+    if (!shop.includes(".myshopify.com")) {
+      fullShopDomain = `${shop}.myshopify.com`;
+    }
+
+    console.log(`🚀 Fetching and storing ALL data for ${fullShopDomain}...`);
+
+    const results = {
+      orders: { stored: 0, total: 0 },
+      products: { stored: 0, total: 0 },
+      customers: { stored: 0, total: 0 }
+    };
+
+    // Fetch and store orders
+    console.log(`📦 Fetching all orders...`);
+    const ordersResponse = await axios.get(`http://localhost:3001/api/shopify/fresh-orders?shop=${shop}&accessToken=${accessToken}`);
+    const orders = ordersResponse.data.orders || [];
+    results.orders.total = orders.length;
+
+    for (const order of orders) {
+      try {
+        await Order.updateOne(
+          { orderId: order.id, shopDomain: fullShopDomain },
+          {
+            orderId: order.id,
+            shopDomain: fullShopDomain,
+            name: order.name,
+            email: order.email,
+            total_price: order.total_price,
+            financial_status: order.financial_status,
+            fulfillment_status: order.fulfillment_status,
+            created_at: order.created_at,
+            updated_at: order.updated_at,
+            line_items: order.line_items,
+            customer: order.customer,
+            shipping_address: order.shipping_address,
+            billing_address: order.billing_address,
+            raw_data: order
+          },
+          { upsert: true }
+        );
+        results.orders.stored++;
+      } catch (err) {
+        console.error(`Error storing order ${order.id}:`, err.message);
+      }
+    }
+
+    // Fetch and store products
+    console.log(`📦 Fetching all products...`);
+    const productsResponse = await axios.get(`http://localhost:3001/api/shopify/fresh-products?shop=${shop}&accessToken=${accessToken}`);
+    const products = productsResponse.data.products || [];
+    results.products.total = products.length;
+
+    for (const product of products) {
+      try {
+        await Product.updateOne(
+          { productId: product.id, shopDomain: fullShopDomain },
+          {
+            productId: product.id,
+            shopDomain: fullShopDomain,
+            title: product.title,
+            vendor: product.vendor,
+            product_type: product.product_type,
+            status: product.status,
+            created_at: product.created_at,
+            updated_at: product.updated_at,
+            variants: product.variants,
+            images: product.images,
+            raw_data: product
+          },
+          { upsert: true }
+        );
+        results.products.stored++;
+      } catch (err) {
+        console.error(`Error storing product ${product.id}:`, err.message);
+      }
+    }
+
+    // Fetch and store customers
+    console.log(`📦 Fetching all customers...`);
+    const customersResponse = await axios.get(`http://localhost:3001/api/shopify/fresh-customers?shop=${shop}&accessToken=${accessToken}`);
+    const customers = customersResponse.data.customers || [];
+    results.customers.total = customers.length;
+
+    for (const customer of customers) {
+      try {
+        await Customer.updateOne(
+          { customerId: customer.id, shopDomain: fullShopDomain },
+          {
+            customerId: customer.id,
+            shopDomain: fullShopDomain,
+            first_name: customer.first_name,
+            last_name: customer.last_name,
+            email: customer.email,
+            phone: customer.phone,
+            created_at: customer.created_at,
+            updated_at: customer.updated_at,
+            state: customer.state,
+            total_spent: customer.total_spent,
+            orders_count: customer.orders_count,
+            addresses: customer.addresses,
+            raw_data: customer
+          },
+          { upsert: true }
+        );
+        results.customers.stored++;
+      } catch (err) {
+        console.error(`Error storing customer ${customer.id}:`, err.message);
+      }
+    }
+
+    console.log(`✅ Data storage complete:`, results);
+    res.json({
+      success: true,
+      message: "All fresh data fetched and stored successfully",
+      results
+    });
+
+  } catch (error) {
+    console.error("❌ Fetch and store all data failed:", error.message);
+    res.status(500).json({
+      error: "Failed to fetch and store all data",
+      details: error.message,
     });
   }
 });

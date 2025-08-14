@@ -23,6 +23,7 @@ interface ShopifyContextType {
   disconnectShop: () => void;
   refreshShopData: () => Promise<void>;
   syncInitialData: () => Promise<void>;
+  fetchAndStoreAllData: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -122,9 +123,9 @@ export const ShopifyProvider: React.FC<ShopifyProviderProps> = ({
       setError(null);
       console.log("API connection successful");
 
-      // Trigger initial data sync after successful connection
+      // Trigger comprehensive sync after successful connection
       await syncInitialData();
-      console.log("Initial data sync completed after API connection");
+      console.log("Comprehensive sync completed after API connection");
     } catch (err) {
       console.error("API connection failed:", err);
       setError(
@@ -176,22 +177,22 @@ export const ShopifyProvider: React.FC<ShopifyProviderProps> = ({
 
   const syncInitialData = async () => {
     if (!shopifyAPI.isAuthenticated()) {
-      console.log("Not authenticated, skipping initial data sync");
+      console.log("Not authenticated, skipping comprehensive sync");
       return;
     }
 
     try {
-      console.log("🚀 Starting initial data sync...");
+      console.log("🚀 Starting comprehensive data sync (ALL data)...");
       const shopDomain = shopData?.domain || shopifyAPI.getShopDomain();
       const accessToken = shopifyAPI.getAccessToken();
 
       if (!shopDomain || !accessToken) {
-        console.error("Missing shop domain or access token for data sync");
+        console.error("Missing shop domain or access token for comprehensive sync");
         return;
       }
 
       const response = await fetch(
-        "http://localhost:3001/api/shopify/sync-initial-data",
+        "http://localhost:3001/api/shopify/comprehensive-sync",
         {
           method: "POST",
           headers: {
@@ -205,15 +206,58 @@ export const ShopifyProvider: React.FC<ShopifyProviderProps> = ({
       );
 
       if (!response.ok) {
-        throw new Error(`Initial data sync failed: ${response.statusText}`);
+        throw new Error(`Comprehensive sync failed: ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log("✅ Initial data sync completed:", result.data);
+      console.log("✅ Comprehensive sync completed:", result.results);
     } catch (err) {
-      console.error("❌ Initial data sync failed:", err);
+      console.error("❌ Comprehensive sync failed:", err);
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      setError(`Failed to sync initial data: ${errorMessage}`);
+      setError(`Failed to sync all data: ${errorMessage}`);
+    }
+  };
+
+  const fetchAndStoreAllData = async () => {
+    if (!shopifyAPI.isAuthenticated()) {
+      console.log("Not authenticated, skipping fetch and store");
+      return;
+    }
+
+    try {
+      console.log("🚀 Fetching and storing ALL data...");
+      const shopDomain = shopData?.domain || shopifyAPI.getShopDomain();
+      const accessToken = shopifyAPI.getAccessToken();
+
+      if (!shopDomain || !accessToken) {
+        console.error("Missing shop domain or access token for fetch and store");
+        return;
+      }
+
+      const response = await fetch(
+        "http://localhost:3001/api/shopify/fetch-and-store-all",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            shop: shopDomain,
+            accessToken: accessToken,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Fetch and store failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("✅ Fetch and store completed:", result.results);
+    } catch (err) {
+      console.error("❌ Fetch and store failed:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(`Failed to fetch and store data: ${errorMessage}`);
     }
   };
 
@@ -228,6 +272,7 @@ export const ShopifyProvider: React.FC<ShopifyProviderProps> = ({
     disconnectShop,
     refreshShopData,
     syncInitialData,
+    fetchAndStoreAllData,
     clearError,
   };
 
