@@ -335,6 +335,51 @@ app.get("/api/cached/customers", async (req, res) => {
   }
 });
 
+// Test endpoint for debugging database operations
+app.get("/api/test-db", async (req, res) => {
+  try {
+    console.log("🧪 Testing database operations...");
+
+    // Test Order model
+    const orderCount = await Order.countDocuments();
+    console.log(`📦 Orders in database: ${orderCount}`);
+
+    // Test Product model
+    const productCount = await Product.countDocuments();
+    console.log(`📱 Products in database: ${productCount}`);
+
+    // Test Customer model
+    const customerCount = await Customer.countDocuments();
+    console.log(`👥 Customers in database: ${customerCount}`);
+
+    // Check distinct shop domains
+    const orderShops = await Order.distinct("shopDomain");
+    const productShops = await Product.distinct("shopDomain");
+    const customerShops = await Customer.distinct("shopDomain");
+
+    console.log("📋 Shop domains in orders:", orderShops);
+    console.log("📋 Shop domains in products:", productShops);
+    console.log("📋 Shop domains in customers:", customerShops);
+
+    res.json({
+      status: "Database test successful",
+      orders: orderCount,
+      products: productCount,
+      customers: customerCount,
+      shopDomains: {
+        orders: orderShops,
+        products: productShops,
+        customers: customerShops,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Database test failed:", error);
+    res
+      .status(500)
+      .json({ error: "Database test failed", details: error.message });
+  }
+});
+
 // Store used authorization codes to prevent reuse
 const usedCodes = new Set();
 
