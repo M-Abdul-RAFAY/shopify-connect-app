@@ -16,6 +16,7 @@ import { useShopifyData } from "../hooks/useShopifyData";
 import { useNavigation } from "../contexts/NavigationContext";
 import { useShopify } from "../contexts/ShopifyContext";
 import { formatCurrencyWithShop } from "../utils/currency";
+import OrdersMap from "./OrdersMap";
 
 const Dashboard = () => {
   const { data, loading, error } = useShopifyData();
@@ -719,100 +720,14 @@ const Dashboard = () => {
             <div className="text-center mb-4">
               <MapPin className="w-8 h-8 text-blue-500 dark:text-blue-400 mx-auto mb-2" />
               <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                Order Distribution Map
+                Google Maps - Order Locations
               </h4>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Geographic spread of your orders
+                Interactive map showing real order locations
               </p>
             </div>
 
-            {/* Simple World Map Visualization */}
-            <div
-              className="bg-white dark:bg-gray-700 rounded-lg p-4 shadow-inner relative overflow-hidden"
-              style={{ height: "200px" }}
-            >
-              {(() => {
-                // Get unique countries from orders
-                const countries: string[] = [];
-                orders.forEach((order) => {
-                  if (order.shipping_address?.country) {
-                    const country = order.shipping_address.country;
-                    if (!countries.includes(country)) {
-                      countries.push(country);
-                    }
-                  }
-                });
-
-                if (countries.length === 0) {
-                  return (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center">
-                        <Activity className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          No location data available
-                        </p>
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="relative h-full">
-                    {/* World Map Background */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-green-100 dark:from-blue-900/30 dark:to-green-900/30 rounded">
-                      {/* Simulated continents */}
-                      <div className="absolute top-8 left-8 w-16 h-12 bg-green-300 dark:bg-green-700 rounded-lg opacity-60"></div>
-                      <div className="absolute top-6 left-28 w-20 h-16 bg-green-300 dark:bg-green-700 rounded-lg opacity-60"></div>
-                      <div className="absolute top-12 left-52 w-14 h-18 bg-green-300 dark:bg-green-700 rounded-lg opacity-60"></div>
-                      <div className="absolute bottom-8 left-12 w-12 h-10 bg-green-300 dark:bg-green-700 rounded-lg opacity-60"></div>
-                      <div className="absolute bottom-6 left-32 w-16 h-14 bg-green-300 dark:bg-green-700 rounded-lg opacity-60"></div>
-                      <div className="absolute bottom-10 right-8 w-18 h-16 bg-green-300 dark:bg-green-700 rounded-lg opacity-60"></div>
-                    </div>
-
-                    {/* Order Points */}
-                    {countries.slice(0, 8).map((country, index) => {
-                      const positions = [
-                        { top: "25%", left: "15%" }, // North America
-                        { top: "35%", left: "35%" }, // Europe
-                        { top: "45%", left: "65%" }, // Asia
-                        { top: "65%", left: "25%" }, // South America
-                        { top: "55%", left: "45%" }, // Africa
-                        { top: "70%", left: "75%" }, // Australia
-                        { top: "30%", left: "25%" }, // North America 2
-                        { top: "40%", left: "55%" }, // Asia 2
-                      ];
-
-                      const position = positions[index % positions.length];
-
-                      return (
-                        <div
-                          key={country}
-                          className="absolute transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
-                          style={{ top: position.top, left: position.left }}
-                        >
-                          <div className="relative">
-                            <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full animate-pulse shadow-lg group-hover:scale-150 transition-transform"></div>
-                            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                              {country}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {/* Legend */}
-                    <div className="absolute bottom-2 right-2 bg-white dark:bg-gray-800 rounded px-2 py-1 shadow-sm">
-                      <div className="flex items-center space-x-1">
-                        <div className="w-2 h-2 bg-red-500 dark:bg-red-400 rounded-full"></div>
-                        <span className="text-xs text-gray-600 dark:text-gray-400">
-                          Orders
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
+            <OrdersMap orders={orders} height="300px" />
           </div>
 
           {/* Location Statistics */}
