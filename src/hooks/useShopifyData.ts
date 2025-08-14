@@ -20,11 +20,34 @@ interface AnalyticsData {
   revenueByMonth: { [key: string]: number };
 }
 
+interface ShipmentData {
+  id: string;
+  orderId: string;
+  customer: string;
+  origin: string;
+  destination: string;
+  carrier: string;
+  trackingNumber: string | null;
+  status: string;
+  estimatedDelivery: string;
+  actualDelivery: string | null;
+  items: number;
+  weight: string;
+  cost: number;
+}
+
+interface FulfillmentData {
+  shipments: ShipmentData[];
+  fulfillmentCenters: unknown[];
+  totalShipments: number;
+  avgProcessingTime: string;
+  onTimeDeliveryRate: string;
+}
+
 // Calculate analytics from fetched data
 const calculateAnalyticsFromData = (
   products: ShopifyProduct[],
-  orders: ShopifyOrder[],
-  customers: ShopifyCustomer[]
+  orders: ShopifyOrder[]
 ): AnalyticsData => {
   // Calculate total revenue from orders
   const totalRevenue = orders.reduce((sum, order) => {
@@ -128,43 +151,39 @@ export const useShopifyData = () => {
       console.log("Access token available:", !!accessToken);
 
       // Use cached data service that automatically falls back to API if cache unavailable
-      const [productsRes, ordersRes, customersRes] = await Promise.all([
+      const [productsRes, ordersRes] = await Promise.all([
         cachedDataService.getProducts(shopDomain, accessToken || undefined, {
           limit: 10000,
         }), // Get all products
         cachedDataService.getOrders(shopDomain, accessToken || undefined, {
           limit: 10000,
         }), // Get all orders
-        cachedDataService.getCustomers(shopDomain, accessToken || undefined, {
-          limit: 10000,
-        }), // Get all customers
       ]);
 
       // Calculate analytics from the fetched data
       const calculatedAnalytics = calculateAnalyticsFromData(
         productsRes.products || [],
-        ordersRes.orders || [],
-        customersRes.customers || []
+        ordersRes.orders || []
       );
 
       console.log("All Shopify data fetched successfully:", {
         products: productsRes.products?.length || 0,
         orders: ordersRes.orders?.length || 0,
-        customers: customersRes.customers?.length || 0,
+        customers: 0, // Not fetched in this hook
         shop: shopData?.name || "unknown",
         analytics: calculatedAnalytics ? "calculated" : "unavailable",
-        source: `${productsRes.source || "api"}_${ordersRes.source || "api"}_${
-          customersRes.source || "api"
-        }`,
+        source: `${productsRes.source || "api"}_${
+          ordersRes.source || "api"
+        }_cached`,
         totalProducts: productsRes.pagination?.total_count || 0,
         totalOrders: ordersRes.pagination?.total_count || 0,
-        totalCustomers: customersRes.pagination?.total_count || 0,
+        totalCustomers: 0, // Not tracked in this hook
       });
 
       setData({
         products: productsRes.products,
         orders: ordersRes.orders,
-        customers: customersRes.customers,
+        customers: [], // Not fetched
         shop: shopData, // Use shopData from context instead of API call
         analytics: calculatedAnalytics,
       });
@@ -343,21 +362,17 @@ export const useShopifyAnalytics = () => {
       // Fetch all products, orders, customers from cache and calculate analytics
       const shopDomain = shopData.myshopify_domain || "";
       const accessToken = shopifyAPI.getAccessToken();
-      const [productsRes, ordersRes, customersRes] = await Promise.all([
+      const [productsRes, ordersRes] = await Promise.all([
         cachedDataService.getProducts(shopDomain, accessToken || undefined, {
           limit: 10000,
         }),
         cachedDataService.getOrders(shopDomain, accessToken || undefined, {
           limit: 10000,
         }),
-        cachedDataService.getCustomers(shopDomain, accessToken || undefined, {
-          limit: 10000,
-        }),
       ]);
       const calculated = calculateAnalyticsFromData(
         productsRes.products || [],
-        ordersRes.orders || [],
-        customersRes.customers || []
+        ordersRes.orders || []
       );
       setAnalytics(calculated);
     } catch (err) {
@@ -406,16 +421,16 @@ export const useShopifyOrderStats = () => {
       const stats = {
         totalOrders: orders.length,
         processing: orders.filter(
-          (order) =>
+          (order: ShopifyOrder) =>
             order.fulfillment_status === null ||
             order.fulfillment_status === "pending" ||
             order.fulfillment_status === "restocked"
         ).length,
         completed: orders.filter(
-          (order) => order.fulfillment_status === "fulfilled"
+          (order: ShopifyOrder) => order.fulfillment_status === "fulfilled"
         ).length,
         inTransit: orders.filter(
-          (order) => order.fulfillment_status === "partial"
+          (order: ShopifyOrder) => order.fulfillment_status === "partial"
         ).length,
       };
       setOrderStats(stats);
@@ -435,14 +450,6 @@ export const useShopifyOrderStats = () => {
 
   return { orderStats, loading, error, refetch: fetchOrderStats };
 };
-
-interface FulfillmentData {
-  shipments: any[];
-  fulfillmentCenters: any[];
-  totalShipments: number;
-  avgProcessingTime: string;
-  onTimeDeliveryRate: string;
-}
 
 export const useShopifyFulfillment = () => {
   const { isConnected, shopData } = useShopify();
@@ -469,59 +476,84 @@ export const useShopifyFulfillment = () => {
       const orders = response.orders;
 
       // Map orders to shipment format expected by Fulfillment component
-      const shipments = orders.map((order: any, index: number) => {
-        // Extract tracking number from fulfillments array
-        const trackingNumber =
-          order.fulfillments && order.fulfillments.length > 0
-            ? order.fulfillments[0].tracking_number
-            : null;
-
-        return {
-          id: `SHP-${order.id || index}`,
-          orderId: order.name || `#${order.id || index}`,
-          customer:
-            order.customer?.first_name && order.customer?.last_name
-              ? `${order.customer.first_name} ${order.customer.last_name}`
-              : order.billing_address?.name ||
-                order.shipping_address?.name ||
-                "Unknown Customer",
-          origin: "Main Warehouse",
-          destination: order.shipping_address
-            ? `${order.shipping_address.address1 || ""}, ${
-                order.shipping_address.city || ""
-              }, ${order.shipping_address.province_code || ""}`
-            : "Unknown Address",
-          carrier:
+      const shipments: ShipmentData[] = orders.map(
+        (order: ShopifyOrder, index: number) => {
+          // Extract tracking number from fulfillments array
+          const trackingNumber =
             order.fulfillments && order.fulfillments.length > 0
-              ? order.fulfillments[0].tracking_company || "PostEx"
-              : ["FedEx", "UPS", "DHL", "USPS"][index % 4],
-          trackingNumber: trackingNumber,
-          status:
-            order.fulfillment_status === "fulfilled"
-              ? "Delivered"
-              : order.fulfillment_status === "partial"
-              ? "In Transit"
-              : order.fulfillment_status === "restocked"
-              ? "Exception"
-              : "Processing",
-          estimatedDelivery: order.created_at
-            ? new Date(
-                new Date(order.created_at).getTime() + 5 * 24 * 60 * 60 * 1000
-              )
-                .toISOString()
-                .split("T")[0]
-            : "",
-          actualDelivery:
-            order.fulfillment_status === "fulfilled"
-              ? order.updated_at?.split("T")[0]
-              : null,
-          items: order.line_items?.length || 1,
-          weight: `${(Math.random() * 5 + 1).toFixed(1)} lbs`,
-          cost: parseFloat(
-            order.total_price || order.total_shipping || "10.99"
-          ),
-        };
+              ? order.fulfillments[0].tracking_number
+              : null;
+
+          return {
+            id: `SHP-${order.id || index}`,
+            orderId: order.name || `#${order.id || index}`,
+            customer:
+              order.customer?.first_name && order.customer?.last_name
+                ? `${order.customer.first_name} ${order.customer.last_name}`
+                : order.billing_address?.name ||
+                  order.shipping_address?.name ||
+                  "Unknown Customer",
+            origin: "Main Warehouse",
+            destination: order.shipping_address
+              ? `${order.shipping_address.address1 || ""}, ${
+                  order.shipping_address.city || ""
+                }, ${order.shipping_address.province_code || ""}`
+              : "Unknown Address",
+            carrier:
+              order.fulfillments && order.fulfillments.length > 0
+                ? order.fulfillments[0].tracking_company || "PostEx"
+                : ["FedEx", "UPS", "DHL", "USPS"][index % 4],
+            trackingNumber: trackingNumber,
+            status:
+              order.fulfillment_status === "fulfilled"
+                ? "Delivered"
+                : order.fulfillment_status === "partial"
+                ? "In Transit"
+                : order.fulfillment_status === "restocked"
+                ? "Exception"
+                : "Processing",
+            estimatedDelivery: order.created_at
+              ? new Date(
+                  new Date(order.created_at).getTime() + 5 * 24 * 60 * 60 * 1000
+                )
+                  .toISOString()
+                  .split("T")[0]
+              : "",
+            actualDelivery:
+              order.fulfillment_status === "fulfilled"
+                ? order.updated_at?.split("T")[0]
+                : null,
+            items: order.line_items?.length || 1,
+            weight: `${(Math.random() * 5 + 1).toFixed(1)} lbs`,
+            cost: parseFloat(order.total_price || "10.99"),
+          };
+        }
+      );
+
+      // Calculate on-time delivery rate from real data
+      const deliveredShipments = shipments.filter(
+        (s: ShipmentData) => s.status === "Delivered"
+      );
+      let onTimeCount = 0;
+
+      deliveredShipments.forEach((shipment: ShipmentData) => {
+        if (shipment.estimatedDelivery && shipment.actualDelivery) {
+          const estimatedDate = new Date(shipment.estimatedDelivery);
+          const actualDate = new Date(shipment.actualDelivery);
+          // Consider on-time if delivered within 1 day of estimate
+          const diffDays =
+            (actualDate.getTime() - estimatedDate.getTime()) /
+            (1000 * 60 * 60 * 24);
+          if (diffDays <= 1) {
+            onTimeCount++;
+          }
+        }
       });
+
+      const onTimeDeliveryRate =
+        deliveredShipments.length > 0
+          ? Math.round((onTimeCount / deliveredShipments.length) * 100)
+          : 95; // Default fallback
 
       // Mock fulfillment stats
       const fulfillmentStats = {
@@ -529,7 +561,7 @@ export const useShopifyFulfillment = () => {
         fulfillmentCenters: [],
         totalShipments: shipments.length,
         avgProcessingTime: "2 days",
-        onTimeDeliveryRate: "98%",
+        onTimeDeliveryRate: `${onTimeDeliveryRate}%`,
       };
       setFulfillmentData(fulfillmentStats);
     } catch (err) {

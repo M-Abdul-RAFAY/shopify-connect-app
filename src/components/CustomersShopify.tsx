@@ -10,6 +10,9 @@ import {
   DollarSign,
   ShoppingBag,
   Star,
+  ChevronDown,
+  ChevronUp,
+  Eye,
 } from "lucide-react";
 import { useShopifyCustomers, useShopifyData } from "../hooks/useShopifyData";
 import { useShopify } from "../contexts/ShopifyContext";
@@ -20,12 +23,19 @@ import { PaginationControls } from "../utils/pagination.tsx";
 const CustomersShopify = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("created_at");
+  const [expandedCustomer, setExpandedCustomer] = useState<number | null>(null);
   const { customers, loading, error } = useShopifyCustomers();
   const { data: shopData } = useShopifyData();
   const { isConnected } = useShopify();
 
   // Get shop currency or fallback to USD
   const shopCurrency = shopData?.shop?.currency || "USD";
+
+  // Get customer's orders from the shop data
+  const getCustomerOrders = (customerId: number) => {
+    if (!shopData?.orders) return [];
+    return shopData.orders.filter((order) => order.customer?.id === customerId);
+  };
 
   // Filter and sort customers
   const filteredCustomers = customers.filter((customer) => {
@@ -114,29 +124,6 @@ const CustomersShopify = () => {
       </div>
     );
   }
-
-  const getTierFromSpent = (totalSpent: string) => {
-    const spent = parseFloat(totalSpent);
-    if (spent >= 1000) return "Platinum";
-    if (spent >= 500) return "Gold";
-    if (spent >= 100) return "Silver";
-    return "Bronze";
-  };
-
-  const getTierColor = (tier: string) => {
-    switch (tier) {
-      case "Platinum":
-        return "bg-purple-100 text-purple-800";
-      case "Gold":
-        return "bg-yellow-100 text-yellow-800";
-      case "Silver":
-        return "bg-gray-100 text-gray-800";
-      case "Bronze":
-        return "bg-orange-100 text-orange-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
 
   const customerStats = {
     total: customers.length,
@@ -291,7 +278,9 @@ const CustomersShopify = () => {
       {/* Customers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 animate-slide-up">
         {paginatedCustomers.map((customer) => {
-          const tier = getTierFromSpent(customer.total_spent);
+          const customerOrders = getCustomerOrders(customer.id);
+          const isExpanded = expandedCustomer === customer.id;
+
           return (
             <div
               key={customer.id}
@@ -313,13 +302,6 @@ const CustomersShopify = () => {
                         ? `${customer.first_name} ${customer.last_name}`
                         : customer.email}
                     </h3>
-                    {/* <span
-                      className={`px-3 py-1 text-xs font-medium rounded-full ${getTierColor(
-                        tier
-                      )}`}
-                    >
-                      {tier}
-                    </span> */}
                   </div>
 
                   <div className="mt-2 space-y-2">
@@ -331,9 +313,11 @@ const CustomersShopify = () => {
                     )}
 
                     {customer.phone && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                        <Phone className="w-4 h-4" />
-                        <span>{customer.phone}</span>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg">
+                        <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span className="font-medium text-blue-700 dark:text-blue-300">
+                          {customer.phone}
+                        </span>
                       </div>
                     )}
 
@@ -372,6 +356,23 @@ const CustomersShopify = () => {
                         </p>
                       </div>
                     </div>
+
+                    {/* Last Order Information */}
+                    {customer.last_order_name && (
+                      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-600">
+                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                          <ShoppingBag className="w-4 h-4" />
+                          <span>
+                            Last Order:{" "}
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {customer.last_order_name}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                 
                   </div>
                 </div>
               </div>
