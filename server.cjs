@@ -448,6 +448,529 @@ app.all("/api/shopify/proxy/*", async (req, res) => {
   }
 });
 
+// Fresh data endpoints for real-time service
+app.get("/api/shopify/fresh-orders", async (req, res) => {
+  try {
+    const { shop, accessToken } = req.query;
+
+    if (!shop || !accessToken) {
+      return res.status(400).json({
+        error: "Missing required parameters: shop and accessToken",
+      });
+    }
+
+    // Ensure we're using the full .myshopify.com domain
+    let fullShopDomain = shop;
+    if (!shop.includes(".myshopify.com")) {
+      fullShopDomain = `${shop}.myshopify.com`;
+    }
+
+    console.log(`🔄 Fetching fresh orders for ${fullShopDomain}...`);
+    const url = `https://${fullShopDomain}/admin/api/2024-07/orders.json?status=any&limit=250&order=created_at desc`;
+
+    const response = await axios.get(url, {
+      headers: {
+        "X-Shopify-Access-Token": accessToken,
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log(
+      `📦 Fresh orders fetched: ${response.data.orders?.length || 0} orders`
+    );
+    res.json({ orders: response.data.orders || [] });
+  } catch (error) {
+    console.error(
+      "❌ Fresh orders fetch failed:",
+      error.response?.data || error.message
+    );
+    res.status(500).json({
+      error: "Failed to fetch fresh orders",
+      details: error.response?.data || error.message,
+    });
+  }
+});
+
+app.get("/api/shopify/fresh-products", async (req, res) => {
+  try {
+    const { shop, accessToken } = req.query;
+
+    if (!shop || !accessToken) {
+      return res.status(400).json({
+        error: "Missing required parameters: shop and accessToken",
+      });
+    }
+
+    // Ensure we're using the full .myshopify.com domain
+    let fullShopDomain = shop;
+    if (!shop.includes(".myshopify.com")) {
+      fullShopDomain = `${shop}.myshopify.com`;
+    }
+
+    console.log(`🔄 Fetching fresh products for ${fullShopDomain}...`);
+    const url = `https://${fullShopDomain}/admin/api/2024-07/products.json?limit=250`;
+
+    const response = await axios.get(url, {
+      headers: {
+        "X-Shopify-Access-Token": accessToken,
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log(
+      `📦 Fresh products fetched: ${
+        response.data.products?.length || 0
+      } products`
+    );
+    res.json({ products: response.data.products || [] });
+  } catch (error) {
+    console.error(
+      "❌ Fresh products fetch failed:",
+      error.response?.data || error.message
+    );
+    res.status(500).json({
+      error: "Failed to fetch fresh products",
+      details: error.response?.data || error.message,
+    });
+  }
+});
+
+app.get("/api/shopify/fresh-customers", async (req, res) => {
+  try {
+    const { shop, accessToken } = req.query;
+
+    if (!shop || !accessToken) {
+      return res.status(400).json({
+        error: "Missing required parameters: shop and accessToken",
+      });
+    }
+
+    // Ensure we're using the full .myshopify.com domain
+    let fullShopDomain = shop;
+    if (!shop.includes(".myshopify.com")) {
+      fullShopDomain = `${shop}.myshopify.com`;
+    }
+
+    console.log(`🔄 Fetching fresh customers for ${fullShopDomain}...`);
+    const url = `https://${fullShopDomain}/admin/api/2024-07/customers.json?limit=250`;
+
+    const response = await axios.get(url, {
+      headers: {
+        "X-Shopify-Access-Token": accessToken,
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log(
+      `📦 Fresh customers fetched: ${
+        response.data.customers?.length || 0
+      } customers`
+    );
+    res.json({ customers: response.data.customers || [] });
+  } catch (error) {
+    console.error(
+      "❌ Fresh customers fetch failed:",
+      error.response?.data || error.message
+    );
+    res.status(500).json({
+      error: "Failed to fetch fresh customers",
+      details: error.response?.data || error.message,
+    });
+  }
+});
+
+// Intelligent data sync endpoint - Full sync for new stores, incremental for existing
+app.post("/api/shopify/sync-initial-data", async (req, res) => {
+  try {
+    const { shop, accessToken } = req.body;
+
+    if (!shop || !accessToken) {
+      return res.status(400).json({
+        error: "Missing required parameters: shop and accessToken",
+      });
+    }
+
+    // Ensure we're using the full .myshopify.com domain
+    let fullShopDomain = shop;
+    if (!shop.includes(".myshopify.com")) {
+      fullShopDomain = `${shop}.myshopify.com`;
+    }
+
+    console.log(`🚀 Starting intelligent data sync for ${fullShopDomain}...`);
+
+    // Check if this is a new store or existing store
+    const isNewStore = await checkIfNewStore(fullShopDomain);
+    
+    if (isNewStore) {
+      console.log(`🆕 New store detected - performing FULL sync for ${fullShopDomain}`);
+      const result = await performFullSync(fullShopDomain, accessToken);
+      res.json(result);
+    } else {
+      console.log(`🔄 Existing store detected - performing INCREMENTAL sync for ${fullShopDomain}`);
+      const result = await performIncrementalSync(fullShopDomain, accessToken);
+      res.json(result);
+    }
+
+  } catch (error) {
+    console.error("❌ Intelligent data sync failed:", error.response?.data || error.message);
+    res.status(500).json({ 
+      error: "Failed to sync data", 
+      details: error.response?.data || error.message 
+    });
+  }
+});
+
+// Check if store is new (no data in database)
+async function checkIfNewStore(shopDomain) {
+  try {
+    const { Order, Product, Customer } = require("./models/shopifyModels.cjs");
+    
+    const [orderCount, productCount, customerCount] = await Promise.all([
+      Order.countDocuments({ shopDomain }),
+      Product.countDocuments({ shopDomain }),
+      Customer.countDocuments({ shopDomain })
+    ]);
+
+    // If no data exists, it's a new store
+    const isNew = orderCount === 0 && productCount === 0 && customerCount === 0;
+    console.log(`📊 Store data check for ${shopDomain}:`, {
+      orders: orderCount,
+      products: productCount, 
+      customers: customerCount,
+      isNewStore: isNew
+    });
+    
+    return isNew;
+  } catch (error) {
+    console.error("Error checking store status:", error);
+    return true; // Default to full sync if check fails
+  }
+}
+
+// Full sync for new stores - get ALL data in batches
+async function performFullSync(shopDomain, accessToken) {
+  console.log(`🔄 Starting FULL SYNC for ${shopDomain} - this may take a while...`);
+  
+  const syncResults = {
+    orders: { total: 0, batches: 0 },
+    products: { total: 0, batches: 0 },
+    customers: { total: 0, batches: 0 }
+  };
+
+  try {
+    // Sync all orders in batches
+    console.log("📦 Syncing ALL orders...");
+    syncResults.orders = await fetchAllDataInBatches(shopDomain, accessToken, 'orders');
+    
+    // Sync all products in batches  
+    console.log("📦 Syncing ALL products...");
+    syncResults.products = await fetchAllDataInBatches(shopDomain, accessToken, 'products');
+    
+    // Sync all customers in batches
+    console.log("📦 Syncing ALL customers...");
+    syncResults.customers = await fetchAllDataInBatches(shopDomain, accessToken, 'customers');
+
+    console.log(`✅ FULL SYNC completed for ${shopDomain}:`, syncResults);
+    
+    return {
+      success: true,
+      syncType: "FULL_SYNC",
+      message: "Complete historical data sync completed",
+      data: syncResults,
+      syncedAt: new Date()
+    };
+
+  } catch (error) {
+    console.error("❌ Full sync failed:", error);
+    throw error;
+  }
+}
+
+// Incremental sync for existing stores - only get recent data until match
+async function performIncrementalSync(shopDomain, accessToken) {
+  console.log(`🔄 Starting INCREMENTAL SYNC for ${shopDomain}...`);
+  
+  const syncResults = {
+    orders: { newRecords: 0, checkedPages: 0 },
+    products: { newRecords: 0, checkedPages: 0 },
+    customers: { newRecords: 0, checkedPages: 0 }
+  };
+
+  try {
+    // Sync recent orders until we find matches
+    console.log("📦 Syncing recent orders...");
+    syncResults.orders = await fetchRecentDataUntilMatch(shopDomain, accessToken, 'orders');
+    
+    // Sync recent products until we find matches
+    console.log("📦 Syncing recent products...");
+    syncResults.products = await fetchRecentDataUntilMatch(shopDomain, accessToken, 'products');
+    
+    // Sync recent customers until we find matches
+    console.log("📦 Syncing recent customers...");
+    syncResults.customers = await fetchRecentDataUntilMatch(shopDomain, accessToken, 'customers');
+
+    console.log(`✅ INCREMENTAL SYNC completed for ${shopDomain}:`, syncResults);
+    
+    return {
+      success: true,
+      syncType: "INCREMENTAL_SYNC", 
+      message: "Recent data sync completed",
+      data: syncResults,
+      syncedAt: new Date()
+    };
+
+  } catch (error) {
+    console.error("❌ Incremental sync failed:", error);
+    throw error;
+  }
+}
+
+// Fetch all data in batches for full sync
+async function fetchAllDataInBatches(shopDomain, accessToken, dataType) {
+  const { Order, Product, Customer } = require("./models/shopifyModels.cjs");
+  
+  let endpoint, Model, idField;
+  switch(dataType) {
+    case 'orders':
+      endpoint = 'orders.json?status=any&limit=250&order=created_at desc';
+      Model = Order;
+      idField = 'orderId';
+      break;
+    case 'products': 
+      endpoint = 'products.json?limit=250';
+      Model = Product;
+      idField = 'productId';
+      break;
+    case 'customers':
+      endpoint = 'customers.json?limit=250';
+      Model = Customer;
+      idField = 'customerId';
+      break;
+    default:
+      throw new Error(`Unknown data type: ${dataType}`);
+  }
+
+  let totalRecords = 0;
+  let batchCount = 0;
+  let hasMore = true;
+  let lastId = null;
+
+  while (hasMore) {
+    try {
+      batchCount++;
+      console.log(`📦 Fetching ${dataType} batch ${batchCount}...`);
+      
+      let url = `https://${shopDomain}/admin/api/2024-07/${endpoint}`;
+      if (lastId) {
+        url += `&since_id=${lastId}`;
+      }
+
+      const response = await axios.get(url, {
+        headers: {
+          'X-Shopify-Access-Token': accessToken,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const records = response.data[dataType] || [];
+      
+      if (records.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      // Save to database
+      for (const record of records) {
+        const saveData = { 
+          ...record, 
+          shopDomain, 
+          lastUpdated: new Date()
+        };
+        saveData[idField] = record.id; // Map Shopify ID to model field
+        
+        await Model.findOneAndUpdate(
+          { [idField]: record.id, shopDomain },
+          saveData,
+          { upsert: true, new: true }
+        );
+      }
+
+      totalRecords += records.length;
+      lastId = records[records.length - 1].id;
+      
+      console.log(`✅ Batch ${batchCount}: ${records.length} ${dataType} saved (Total: ${totalRecords})`);
+      
+      // If we got less than 250, we're done
+      if (records.length < 250) {
+        hasMore = false;
+      }
+
+      // Small delay to avoid rate limits
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+    } catch (error) {
+      console.error(`❌ Error fetching ${dataType} batch ${batchCount}:`, error.message);
+      throw error;
+    }
+  }
+
+  return { total: totalRecords, batches: batchCount };
+}
+
+// Fetch recent data until we find matching records in database
+async function fetchRecentDataUntilMatch(shopDomain, accessToken, dataType) {
+  const { Order, Product, Customer } = require("./models/shopifyModels.cjs");
+  
+  let endpoint, Model, idField;
+  switch(dataType) {
+    case 'orders':
+      endpoint = 'orders.json?status=any&limit=250&order=created_at desc';
+      Model = Order;
+      idField = 'orderId';
+      break;
+    case 'products': 
+      endpoint = 'products.json?limit=250';
+      Model = Product;
+      idField = 'productId';
+      break;
+    case 'customers':
+      endpoint = 'customers.json?limit=250';
+      Model = Customer;
+      idField = 'customerId';
+      break;
+    default:
+      throw new Error(`Unknown data type: ${dataType}`);
+  }
+
+  let newRecords = 0;
+  let checkedPages = 0;
+  let hasMore = true;
+  let lastId = null;
+
+  while (hasMore && checkedPages < 10) { // Limit to 10 pages for safety
+    try {
+      checkedPages++;
+      console.log(`🔍 Checking ${dataType} page ${checkedPages} for new records...`);
+      
+      let url = `https://${shopDomain}/admin/api/2024-07/${endpoint}`;
+      if (lastId) {
+        url += `&since_id=${lastId}`;
+      }
+
+      const response = await axios.get(url, {
+        headers: {
+          'X-Shopify-Access-Token': accessToken,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const records = response.data[dataType] || [];
+      
+      if (records.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      let foundMatch = false;
+      let recordsToSave = [];
+
+      // Check each record to see if it exists in database
+      for (const record of records) {
+        const existingRecord = await Model.findOne({ 
+          [idField]: record.id, 
+          shopDomain 
+        });
+
+        if (existingRecord) {
+          // Found existing record - we can stop here
+          console.log(`🎯 Found matching ${dataType} record (ID: ${record.id}) - stopping sync`);
+          foundMatch = true;
+          break;
+        } else {
+          // New record - add to save list
+          recordsToSave.push(record);
+        }
+      }
+
+      // Save new records
+      for (const record of recordsToSave) {
+        const saveData = { 
+          ...record, 
+          shopDomain, 
+          lastUpdated: new Date()
+        };
+        saveData[idField] = record.id; // Map Shopify ID to model field
+        
+        await Model.findOneAndUpdate(
+          { [idField]: record.id, shopDomain },
+          saveData,
+          { upsert: true, new: true }
+        );
+        newRecords++;
+      }
+
+      if (recordsToSave.length > 0) {
+        console.log(`✅ Page ${checkedPages}: ${recordsToSave.length} new ${dataType} saved`);
+      }
+
+      // If we found a match or got less than 250 records, we're done
+      if (foundMatch || records.length < 250) {
+        hasMore = false;
+      } else {
+        lastId = records[records.length - 1].id;
+      }
+
+      // Small delay to avoid rate limits
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+    } catch (error) {
+      console.error(`❌ Error fetching recent ${dataType} page ${checkedPages}:`, error.message);
+      throw error;
+    }
+  }
+
+  return { newRecords, checkedPages };
+}
+
+// Manual sync trigger endpoint
+app.post("/api/shopify/manual-sync", async (req, res) => {
+  try {
+    const { shop, accessToken, syncType = "incremental" } = req.body;
+
+    if (!shop || !accessToken) {
+      return res.status(400).json({
+        error: "Missing required parameters: shop and accessToken",
+      });
+    }
+
+    // Ensure we're using the full .myshopify.com domain
+    let fullShopDomain = shop;
+    if (!shop.includes(".myshopify.com")) {
+      fullShopDomain = `${shop}.myshopify.com`;
+    }
+
+    console.log(`🔄 Manual ${syncType} sync triggered for ${fullShopDomain}...`);
+
+    let result;
+    if (syncType === "full") {
+      console.log(`🆕 Performing MANUAL FULL sync for ${fullShopDomain}`);
+      result = await performFullSync(fullShopDomain, accessToken);
+    } else {
+      console.log(`🔄 Performing MANUAL INCREMENTAL sync for ${fullShopDomain}`);
+      result = await performIncrementalSync(fullShopDomain, accessToken);
+    }
+
+    res.json(result);
+
+  } catch (error) {
+    console.error("❌ Manual sync failed:", error.response?.data || error.message);
+    res.status(500).json({ 
+      error: "Failed to perform manual sync", 
+      details: error.response?.data || error.message 
+    });
+  }
+});
+
 // Catch all route
 app.get("*", (req, res) => {
   res.status(404).json({ error: "Route not found" });

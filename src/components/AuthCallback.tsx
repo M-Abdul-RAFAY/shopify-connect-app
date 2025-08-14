@@ -7,7 +7,7 @@ import { useShopify } from "../contexts/ShopifyContext";
 const AuthCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { refreshShopData } = useShopify();
+  const { refreshShopData, syncInitialData } = useShopify();
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
   );
@@ -66,6 +66,11 @@ const AuthCallback: React.FC = () => {
       await refreshShopData();
       console.log("Shop data refresh completed");
 
+      console.log("Starting initial data sync...");
+      // Sync initial data for new connection
+      await syncInitialData();
+      console.log("Initial data sync completed");
+
       setStatus("success");
       setMessage("Successfully connected to your Shopify store!");
 
@@ -89,7 +94,7 @@ const AuthCallback: React.FC = () => {
       );
       setTimeout(() => navigate("/"), 3000);
     }
-  }, [searchParams, navigate, refreshShopData]);
+  }, [searchParams, navigate, refreshShopData, syncInitialData]);
 
   useEffect(() => {
     handleCallback();
