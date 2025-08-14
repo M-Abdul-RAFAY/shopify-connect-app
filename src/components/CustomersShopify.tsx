@@ -10,9 +10,6 @@ import {
   DollarSign,
   ShoppingBag,
   Star,
-  ChevronDown,
-  ChevronUp,
-  Eye,
 } from "lucide-react";
 import { useShopifyCustomers, useShopifyData } from "../hooks/useShopifyData";
 import { useShopify } from "../contexts/ShopifyContext";
@@ -23,19 +20,12 @@ import { PaginationControls } from "../utils/pagination.tsx";
 const CustomersShopify = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("created_at");
-  const [expandedCustomer, setExpandedCustomer] = useState<number | null>(null);
   const { customers, loading, error } = useShopifyCustomers();
   const { data: shopData } = useShopifyData();
   const { isConnected } = useShopify();
 
   // Get shop currency or fallback to USD
   const shopCurrency = shopData?.shop?.currency || "USD";
-
-  // Get customer's orders from the shop data
-  const getCustomerOrders = (customerId: number) => {
-    if (!shopData?.orders) return [];
-    return shopData.orders.filter((order) => order.customer?.id === customerId);
-  };
 
   // Filter and sort customers
   const filteredCustomers = customers.filter((customer) => {
@@ -278,9 +268,6 @@ const CustomersShopify = () => {
       {/* Customers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 animate-slide-up">
         {paginatedCustomers.map((customer) => {
-          const customerOrders = getCustomerOrders(customer.id);
-          const isExpanded = expandedCustomer === customer.id;
-
           return (
             <div
               key={customer.id}
@@ -306,9 +293,11 @@ const CustomersShopify = () => {
 
                   <div className="mt-2 space-y-2">
                     {customer.email && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                        <Mail className="w-4 h-4" />
-                        <span className="truncate">{customer.email}</span>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg">
+                        <Mail className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <span className="truncate font-medium text-gray-700 dark:text-gray-300">
+                          {customer.email}
+                        </span>
                       </div>
                     )}
 
@@ -371,8 +360,6 @@ const CustomersShopify = () => {
                         </div>
                       </div>
                     )}
-
-                 
                   </div>
                 </div>
               </div>
