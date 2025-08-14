@@ -616,6 +616,12 @@ const Dashboard = () => {
                     (sum, item) => sum + (item.quantity || 0),
                     0
                   ) || 0;
+                
+                // Get product names from line items
+                const productNames = order.line_items?.map(item => item.name || item.title || 'Unknown Product') || [];
+                const firstProductName = productNames[0] || 'No products';
+                const additionalCount = productNames.length - 1;
+                
                 // Check if order is older than 3 days (might indicate stock issues)
                 const orderDate = new Date(order.created_at);
                 const daysSinceOrder = Math.floor(
@@ -631,6 +637,9 @@ const Dashboard = () => {
                   items: totalItems,
                   stockStatus: stockStatus,
                   daysPending: daysSinceOrder,
+                  firstProductName: firstProductName,
+                  additionalCount: additionalCount,
+                  productNames: productNames,
                 };
               });
 
@@ -671,29 +680,44 @@ const Dashboard = () => {
                       stockAnalysis.map((item, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded"
+                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
                         >
-                          <div>
-                            <span className="text-xs text-gray-600 dark:text-gray-400">
-                              #{item.id}
-                            </span>
-                            <p className="text-sm text-gray-900 dark:text-white">
-                              {item.items} items
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="text-xs text-gray-600 dark:text-gray-400">
+                                #{item.id}
+                              </span>
+                              <span
+                                className={`px-2 py-1 text-xs rounded-full ${
+                                  item.stockStatus === "In Stock"
+                                    ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400"
+                                    : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400"
+                                }`}
+                              >
+                                {item.stockStatus}
+                              </span>
+                            </div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {item.firstProductName}
+                              {item.additionalCount > 0 && (
+                                <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                                  +{item.additionalCount} more
+                                </span>
+                              )}
                             </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {item.daysPending} days ago
-                            </p>
+                            <div className="flex items-center space-x-3 mt-1">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {item.items} items
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {item.daysPending} days ago
+                              </p>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <span
-                              className={`px-2 py-1 text-xs rounded-full ${
-                                item.stockStatus === "In Stock"
-                                  ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400"
-                                  : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400"
-                              }`}
-                            >
-                              {item.stockStatus}
-                            </span>
+                          <div className="text-right ml-3">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {formatCurrencyWithShop(item.value, shopData)}
+                            </p>
                           </div>
                         </div>
                       ))
