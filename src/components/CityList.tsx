@@ -1,12 +1,6 @@
 import React, { useMemo } from "react";
 import { Activity, MapPin, Users, DollarSign } from "lucide-react";
 
-interface ShopifyStore {
-  currency: string;
-  money_format?: string;
-  [key: string]: unknown;
-}
-
 interface Order {
   id: string | number;
   name?: string;
@@ -29,10 +23,10 @@ interface CityListProps {
   orders: Order[];
   height?: string;
   onCityClick?: (city: string) => void;
-  shopData?: ShopifyStore | null;
+  shopData?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   formatCurrency?: (
     amount: string | number,
-    shopData?: ShopifyStore | null
+    shopData?: any // eslint-disable-line @typescript-eslint/no-explicit-any
   ) => string;
 }
 
@@ -43,6 +37,81 @@ interface CityData {
   totalRevenue: number;
   customers: string[];
 }
+
+// Function to normalize city names to handle duplicates (same as OrdersMap)
+const normalizeCityName = (city: string): string => {
+  if (!city) return "Unknown";
+
+  // Convert to lowercase and trim whitespace
+  let normalized = city.toLowerCase().trim();
+
+  // Remove special characters and extra spaces
+  normalized = normalized.replace(/[^\w\s]/g, "").replace(/\s+/g, " ");
+
+  // Handle common variations
+  const cityMappings: { [key: string]: string } = {
+    lahore: "Lahore",
+    karachi: "Karachi",
+    khi: "Karachi",
+    karach: "Karachi",
+    karchi: "Karachi",
+    islamabad: "Islamabad",
+    isb: "Islamabad",
+    islambad: "Islamabad",
+    islamabqd: "Islamabad",
+    islmabad: "Islamabad",
+    rawalpindi: "Rawalpindi",
+    rwp: "Rawalpindi",
+    rawalpindy: "Rawalpindi",
+    sialkot: "Sialkot",
+    sailkot: "Sialkot",
+    sialkoy: "Sialkot",
+    silkot: "Sialkot",
+    faisalabad: "Faisalabad",
+    fsd: "Faisalabad",
+    faislabad: "Faisalabad",
+    hyderabad: "Hyderabad",
+    hyd: "Hyderabad",
+    hyderabaf: "Hyderabad",
+    multan: "Multan",
+    gujranwala: "Gujranwala",
+    gujrawala: "Gujranwala",
+    gujranwla: "Gujranwala",
+    gujtanwala: "Gujranwala",
+    peshawar: "Peshawar",
+    peshwar: "Peshawar",
+    peshwer: "Peshawar",
+    peshawer: "Peshawar",
+    quetta: "Quetta",
+    sahiwal: "Sahiwal",
+    sargodha: "Sargodha",
+    sarrgofha: "Sargodha",
+    mardan: "Mardan",
+    abbottabad: "Abbottabad",
+    abbottabd: "Abbottabad",
+    bahawalpur: "Bahawalpur",
+    bahwalpur: "Bahawalpur",
+    bhawalpur: "Bahawalpur",
+    bahawalnagar: "Bahawalnagar",
+    bhawalnagar: "Bahawalnagar",
+    "mirpur azad kashmir": "Mirpur Azad Kashmir",
+    "mirpur ajk": "Mirpur Azad Kashmir",
+    "mirpur azad kasmir": "Mirpur Azad Kashmir",
+    "wah cantt": "Wah Cantonment",
+    "wah cantonment": "Wah Cantonment",
+    "wah cantt taxila": "Wah Cantonment",
+    // Add more mappings as needed
+  };
+
+  // Return mapped city name or capitalize first letter of each word
+  return (
+    cityMappings[normalized] ||
+    city
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ")
+  );
+};
 
 // Simple city-based order list (no map, no toggle)
 const CityList: React.FC<CityListProps> = ({
@@ -58,9 +127,10 @@ const CityList: React.FC<CityListProps> = ({
 
     orders.forEach((order) => {
       if (order.shipping_address) {
-        const city = order.shipping_address.city || "Unknown City";
+        const rawCity = order.shipping_address.city || "Unknown City";
+        const normalizedCity = normalizeCityName(rawCity);
         const country = order.shipping_address.country || "Unknown Country";
-        const key = `${city}, ${country}`;
+        const key = `${normalizedCity}, ${country}`;
         const revenue = parseFloat(order.total_price || "0");
         const customer = order.name || "Unknown Customer";
 
@@ -73,7 +143,7 @@ const CityList: React.FC<CityListProps> = ({
           }
         } else {
           cityMap[key] = {
-            city,
+            city: normalizedCity,
             country,
             orderCount: 1,
             totalRevenue: revenue,

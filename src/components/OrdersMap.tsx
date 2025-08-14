@@ -24,6 +24,8 @@ interface ShopifyOrder {
 interface OrdersMapProps {
   orders: ShopifyOrder[];
   focusCity?: string;
+  shopData?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  formatCurrency?: (amount: string | number, shopData?: any) => string; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 // City coordinates mapping
@@ -83,7 +85,162 @@ const cityCoordinates: { [key: string]: { lat: number; lng: number } } = {
   Wazirabad: { lat: 32.4428, lng: 74.1231 },
 };
 
-const OrdersMap: React.FC<OrdersMapProps> = ({ orders, focusCity }) => {
+// Function to normalize city names to handle duplicates
+const normalizeCityName = (city: string): string => {
+  if (!city) return "Unknown";
+
+  // Convert to lowercase and trim whitespace
+  let normalized = city.toLowerCase().trim();
+
+  // Remove special characters and extra spaces
+  normalized = normalized.replace(/[^\w\s]/g, "").replace(/\s+/g, " ");
+
+  // Handle common variations
+  const cityMappings: { [key: string]: string } = {
+    lahore: "Lahore",
+    karachi: "Karachi",
+    khi: "Karachi",
+    karach: "Karachi",
+    karchi: "Karachi",
+    islamabad: "Islamabad",
+    isb: "Islamabad",
+    islambad: "Islamabad",
+    islamabqd: "Islamabad",
+    islmabad: "Islamabad",
+    rawalpindi: "Rawalpindi",
+    rwp: "Rawalpindi",
+    rawalpindy: "Rawalpindi",
+    sialkot: "Sialkot",
+    sailkot: "Sialkot",
+    sialkoy: "Sialkot",
+    silkot: "Sialkot",
+    faisalabad: "Faisalabad",
+    fsd: "Faisalabad",
+    faislabad: "Faisalabad",
+    hyderabad: "Hyderabad",
+    hyd: "Hyderabad",
+    hyderabaf: "Hyderabad",
+    multan: "Multan",
+    gujranwala: "Gujranwala",
+    gujrawala: "Gujranwala",
+    gujranwla: "Gujranwala",
+    gujtanwala: "Gujranwala",
+    peshawar: "Peshawar",
+    peshwar: "Peshawar",
+    peshwer: "Peshawar",
+    peshawer: "Peshawar",
+    quetta: "Quetta",
+    sahiwal: "Sahiwal",
+    sargodha: "Sargodha",
+    sarrgofha: "Sargodha",
+    mardan: "Mardan",
+    abbottabad: "Abbottabad",
+    abbottabd: "Abbottabad",
+    bahawalpur: "Bahawalpur",
+    bahwalpur: "Bahawalpur",
+    bhawalpur: "Bahawalpur",
+    bahawalnagar: "Bahawalnagar",
+    bhawalnagar: "Bahawalnagar",
+    "mirpur azad kashmir": "Mirpur Azad Kashmir",
+    "mirpur ajk": "Mirpur Azad Kashmir",
+    "mirpur azad kasmir": "Mirpur Azad Kashmir",
+    "wah cantt": "Wah Cantonment",
+    "wah cantonment": "Wah Cantonment",
+    "wah cantt taxila": "Wah Cantonment",
+    taxila: "Taxila",
+    jhelum: "Jhelum",
+    jehlum: "Jhelum",
+    gujrat: "Gujrat",
+    guirat: "Gujrat",
+    jhang: "Jhang",
+    okara: "Okara",
+    kasur: "Kasur",
+    chiniot: "Chiniot",
+    chinyot: "Chiniot",
+    daska: "Daska",
+    hafizabad: "Hafizabad",
+    khanewal: "Khanewal",
+    mianwali: "Mianwali",
+    muzaffargarh: "Muzaffargarh",
+    "rahimyar khan": "Rahim Yar Khan",
+    "rahim yar khan": "Rahim Yar Khan",
+    rahimyarkhan: "Rahim Yar Khan",
+    vehari: "Vehari",
+    vihare: "Vehari",
+    pakpattan: "Pakpattan",
+    pakpatan: "Pakpattan",
+    "pakpattan sharif": "Pakpattan",
+    "toba tek singh": "Toba Tek Singh",
+    kamalia: "Kamalia",
+    jaranwala: "Jaranwala",
+    mailsi: "Mailsi",
+    sheikhupura: "Sheikhupura",
+    lodhran: "Lodhran",
+    khushab: "Khushab",
+    attock: "Attock",
+    chakwal: "Chakwal",
+    "mandi bahauddin": "Mandi Bahauddin",
+    "mandi bahoudin": "Mandi Bahauddin",
+    "mandi bahuddin": "Mandi Bahauddin",
+    mandibahauddin: "Mandi Bahauddin",
+    narowal: "Narowal",
+    narwoal: "Narowal",
+    wazirabad: "Wazirabad",
+    wazirbad: "Wazirabad",
+    sukkur: "Sukkur",
+    larkana: "Larkana",
+    nawabshah: "Nawabshah",
+    "mirpur khas": "Mirpur Khas",
+    mirpurkhas: "Mirpur Khas",
+    jacobabad: "Jacobabad",
+    shikarpur: "Shikarpur",
+    khairpur: "Khairpur",
+    "khairpur mirs": "Khairpur",
+    "khaipur mirs": "Khairpur",
+    dadu: "Dadu",
+    turbat: "Turbat",
+    kohat: "Kohat",
+    karak: "Karak",
+    bannu: "Bannu",
+    mingora: "Mingora",
+    mingaora: "Mingora",
+    swat: "Swat",
+    mansehra: "Mansehra",
+    nowshera: "Nowshera",
+    charsadda: "Charsadda",
+    "dera ismail khan": "Dera Ismail Khan",
+    "d i khan": "Dera Ismail Khan",
+    "di khan": "Dera Ismail Khan",
+    "dera ghazi khan": "Dera Ghazi Khan",
+    layyah: "Layyah",
+    layyh: "Layyah",
+    bhakkar: "Bhakkar",
+    muzaffarabad: "Muzaffarabad",
+    muzafrabad: "Muzaffarabad",
+    muzffgaher: "Muzaffargarh",
+    kotli: "Kotli",
+    mirpur: "Mirpur",
+    gilgit: "Gilgit",
+    chitral: "Chitral",
+    parachinar: "Parachinar",
+  };
+
+  // Return mapped city name or capitalize first letter of each word
+  return (
+    cityMappings[normalized] ||
+    city
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ")
+  );
+};
+
+const OrdersMap: React.FC<OrdersMapProps> = ({
+  orders,
+  focusCity,
+  shopData,
+  formatCurrency,
+}) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<{ [city: string]: google.maps.Marker }>({});
@@ -94,11 +251,13 @@ const OrdersMap: React.FC<OrdersMapProps> = ({ orders, focusCity }) => {
   // Group orders by city
   const cityData = useMemo(() => {
     const grouped = orders.reduce((acc, order) => {
-      const city = order.shipping_address?.city || "Unknown";
-      if (!acc[city]) {
-        acc[city] = [];
+      const rawCity = order.shipping_address?.city || "Unknown";
+      const normalizedCity = normalizeCityName(rawCity);
+
+      if (!acc[normalizedCity]) {
+        acc[normalizedCity] = [];
       }
-      acc[city].push(order);
+      acc[normalizedCity].push(order);
       return acc;
     }, {} as { [key: string]: ShopifyOrder[] });
 
@@ -191,18 +350,23 @@ const OrdersMap: React.FC<OrdersMapProps> = ({ orders, focusCity }) => {
             (sum, order) => sum + parseFloat(order.total_price || "0"),
             0
           );
+
+          const formattedRevenue = formatCurrency
+            ? formatCurrency(totalRevenue, shopData)
+            : `$${totalRevenue.toFixed(2)}`;
+
+          const formattedAvgRevenue = formatCurrency
+            ? formatCurrency(totalRevenue / count, shopData)
+            : `$${(totalRevenue / count).toFixed(2)}`;
+
           const infoWindow = new window.google.maps.InfoWindow({
             content: `
               <div style="padding: 12px; min-width: 200px; font-family: system-ui, -apple-system, sans-serif; background-color: white;">
                 <h3 style="font-weight: 600; font-size: 18px; margin-bottom: 8px; color: #1f2937;">${city}</h3>
                 <div style="font-size: 14px; line-height: 1.5; color: #374151;">
                   <p style="margin: 4px 0; color: #374151;"><strong style="color: #1f2937;">Orders:</strong> ${count}</p>
-                  <p style="margin: 4px 0; color: #374151;"><strong style="color: #1f2937;">Revenue:</strong> $${totalRevenue.toFixed(
-                    2
-                  )}</p>
-                  <p style="margin: 4px 0; color: #374151;"><strong style="color: #1f2937;">Avg per Order:</strong> $${(
-                    totalRevenue / count
-                  ).toFixed(2)}</p>
+                  <p style="margin: 4px 0; color: #374151;"><strong style="color: #1f2937;">Revenue:</strong> ${formattedRevenue}</p>
+                  <p style="margin: 4px 0; color: #374151;"><strong style="color: #1f2937;">Avg per Order:</strong> ${formattedAvgRevenue}</p>
                 </div>
               </div>
             `,
@@ -223,7 +387,7 @@ const OrdersMap: React.FC<OrdersMapProps> = ({ orders, focusCity }) => {
       console.error("Error initializing map:", err);
       setError("Failed to initialize map");
     }
-  }, [isLoaded, cityData]);
+  }, [isLoaded, cityData, formatCurrency, shopData]);
 
   // Handle focusing on a specific city
   useEffect(() => {

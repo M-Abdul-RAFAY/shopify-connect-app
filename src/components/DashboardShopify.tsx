@@ -730,7 +730,12 @@ const Dashboard = () => {
               </p>
             </div>
 
-            <OrdersMap orders={orders} focusCity={focusedCity} />
+            <OrdersMap
+              orders={orders}
+              focusCity={focusedCity}
+              shopData={shopData}
+              formatCurrency={formatCurrencyWithShop}
+            />
           </div>
 
           {/* Orders by City */}
