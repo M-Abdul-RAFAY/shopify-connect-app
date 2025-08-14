@@ -430,7 +430,10 @@ const OrderManagementSystem = () => {
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {paginatedOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200">
+                <tr
+                  key={order.id}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
+                >
                   <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -462,7 +465,9 @@ const OrderManagementSystem = () => {
                       )}`}
                     >
                       {getStatusIcon(order)}
-                      <span className="hidden sm:inline">{getStatusText(order)}</span>
+                      <span className="hidden sm:inline">
+                        {getStatusText(order)}
+                      </span>
                     </div>
                   </td>
                   <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
