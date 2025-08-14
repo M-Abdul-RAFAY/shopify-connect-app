@@ -180,11 +180,16 @@ const OrdersMap: React.FC<OrdersMapProps> = ({ orders }) => {
           );
           const infoWindow = new window.google.maps.InfoWindow({
             content: `
-              <div class="p-3 min-w-[200px]">
-                <h3 class="font-semibold text-lg mb-2">${city}</h3>
-                <div class="space-y-1 text-sm">
-                  <p><strong>Orders:</strong> ${count}</p>
-                  <p><strong>Revenue:</strong> $${totalRevenue.toFixed(2)}</p>
+              <div style="padding: 12px; min-width: 200px; font-family: system-ui, -apple-system, sans-serif; background-color: white;">
+                <h3 style="font-weight: 600; font-size: 18px; margin-bottom: 8px; color: #1f2937;">${city}</h3>
+                <div style="font-size: 14px; line-height: 1.5; color: #374151;">
+                  <p style="margin: 4px 0; color: #374151;"><strong style="color: #1f2937;">Orders:</strong> ${count}</p>
+                  <p style="margin: 4px 0; color: #374151;"><strong style="color: #1f2937;">Revenue:</strong> $${totalRevenue.toFixed(
+                    2
+                  )}</p>
+                  <p style="margin: 4px 0; color: #374151;"><strong style="color: #1f2937;">Avg per Order:</strong> $${(
+                    totalRevenue / count
+                  ).toFixed(2)}</p>
                 </div>
               </div>
             `,
