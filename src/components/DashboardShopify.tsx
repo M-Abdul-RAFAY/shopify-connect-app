@@ -616,12 +616,15 @@ const Dashboard = () => {
                     (sum, item) => sum + (item.quantity || 0),
                     0
                   ) || 0;
-                
+
                 // Get product names from line items
-                const productNames = order.line_items?.map(item => item.name || item.title || 'Unknown Product') || [];
-                const firstProductName = productNames[0] || 'No products';
+                const productNames =
+                  order.line_items?.map(
+                    (item) => item.name || item.title || "Unknown Product"
+                  ) || [];
+                const firstProductName = productNames[0] || "No products";
                 const additionalCount = productNames.length - 1;
-                
+
                 // Check if order is older than 3 days (might indicate stock issues)
                 const orderDate = new Date(order.created_at);
                 const daysSinceOrder = Math.floor(
