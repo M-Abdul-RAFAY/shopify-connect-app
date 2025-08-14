@@ -600,22 +600,28 @@ app.post("/api/shopify/sync-initial-data", async (req, res) => {
 
     // Check if this is a new store or existing store
     const isNewStore = await checkIfNewStore(fullShopDomain);
-    
+
     if (isNewStore) {
-      console.log(`🆕 New store detected - performing FULL sync for ${fullShopDomain}`);
+      console.log(
+        `🆕 New store detected - performing FULL sync for ${fullShopDomain}`
+      );
       const result = await performFullSync(fullShopDomain, accessToken);
       res.json(result);
     } else {
-      console.log(`🔄 Existing store detected - performing INCREMENTAL sync for ${fullShopDomain}`);
+      console.log(
+        `🔄 Existing store detected - performing INCREMENTAL sync for ${fullShopDomain}`
+      );
       const result = await performIncrementalSync(fullShopDomain, accessToken);
       res.json(result);
     }
-
   } catch (error) {
-    console.error("❌ Intelligent data sync failed:", error.response?.data || error.message);
-    res.status(500).json({ 
-      error: "Failed to sync data", 
-      details: error.response?.data || error.message 
+    console.error(
+      "❌ Intelligent data sync failed:",
+      error.response?.data || error.message
+    );
+    res.status(500).json({
+      error: "Failed to sync data",
+      details: error.response?.data || error.message,
     });
   }
 });
@@ -624,22 +630,22 @@ app.post("/api/shopify/sync-initial-data", async (req, res) => {
 async function checkIfNewStore(shopDomain) {
   try {
     const { Order, Product, Customer } = require("./models/shopifyModels.cjs");
-    
+
     const [orderCount, productCount, customerCount] = await Promise.all([
       Order.countDocuments({ shopDomain }),
       Product.countDocuments({ shopDomain }),
-      Customer.countDocuments({ shopDomain })
+      Customer.countDocuments({ shopDomain }),
     ]);
 
     // If no data exists, it's a new store
     const isNew = orderCount === 0 && productCount === 0 && customerCount === 0;
     console.log(`📊 Store data check for ${shopDomain}:`, {
       orders: orderCount,
-      products: productCount, 
+      products: productCount,
       customers: customerCount,
-      isNewStore: isNew
+      isNewStore: isNew,
     });
-    
+
     return isNew;
   } catch (error) {
     console.error("Error checking store status:", error);
@@ -649,37 +655,50 @@ async function checkIfNewStore(shopDomain) {
 
 // Full sync for new stores - get ALL data in batches
 async function performFullSync(shopDomain, accessToken) {
-  console.log(`🔄 Starting FULL SYNC for ${shopDomain} - this may take a while...`);
-  
+  console.log(
+    `🔄 Starting FULL SYNC for ${shopDomain} - this may take a while...`
+  );
+
   const syncResults = {
     orders: { total: 0, batches: 0 },
     products: { total: 0, batches: 0 },
-    customers: { total: 0, batches: 0 }
+    customers: { total: 0, batches: 0 },
   };
 
   try {
     // Sync all orders in batches
     console.log("📦 Syncing ALL orders...");
-    syncResults.orders = await fetchAllDataInBatches(shopDomain, accessToken, 'orders');
-    
-    // Sync all products in batches  
+    syncResults.orders = await fetchAllDataInBatches(
+      shopDomain,
+      accessToken,
+      "orders"
+    );
+
+    // Sync all products in batches
     console.log("📦 Syncing ALL products...");
-    syncResults.products = await fetchAllDataInBatches(shopDomain, accessToken, 'products');
-    
+    syncResults.products = await fetchAllDataInBatches(
+      shopDomain,
+      accessToken,
+      "products"
+    );
+
     // Sync all customers in batches
     console.log("📦 Syncing ALL customers...");
-    syncResults.customers = await fetchAllDataInBatches(shopDomain, accessToken, 'customers');
+    syncResults.customers = await fetchAllDataInBatches(
+      shopDomain,
+      accessToken,
+      "customers"
+    );
 
     console.log(`✅ FULL SYNC completed for ${shopDomain}:`, syncResults);
-    
+
     return {
       success: true,
       syncType: "FULL_SYNC",
       message: "Complete historical data sync completed",
       data: syncResults,
-      syncedAt: new Date()
+      syncedAt: new Date(),
     };
-
   } catch (error) {
     console.error("❌ Full sync failed:", error);
     throw error;
@@ -689,36 +708,50 @@ async function performFullSync(shopDomain, accessToken) {
 // Incremental sync for existing stores - only get recent data until match
 async function performIncrementalSync(shopDomain, accessToken) {
   console.log(`🔄 Starting INCREMENTAL SYNC for ${shopDomain}...`);
-  
+
   const syncResults = {
     orders: { newRecords: 0, checkedPages: 0 },
     products: { newRecords: 0, checkedPages: 0 },
-    customers: { newRecords: 0, checkedPages: 0 }
+    customers: { newRecords: 0, checkedPages: 0 },
   };
 
   try {
     // Sync recent orders until we find matches
     console.log("📦 Syncing recent orders...");
-    syncResults.orders = await fetchRecentDataUntilMatch(shopDomain, accessToken, 'orders');
-    
+    syncResults.orders = await fetchRecentDataUntilMatch(
+      shopDomain,
+      accessToken,
+      "orders"
+    );
+
     // Sync recent products until we find matches
     console.log("📦 Syncing recent products...");
-    syncResults.products = await fetchRecentDataUntilMatch(shopDomain, accessToken, 'products');
-    
+    syncResults.products = await fetchRecentDataUntilMatch(
+      shopDomain,
+      accessToken,
+      "products"
+    );
+
     // Sync recent customers until we find matches
     console.log("📦 Syncing recent customers...");
-    syncResults.customers = await fetchRecentDataUntilMatch(shopDomain, accessToken, 'customers');
+    syncResults.customers = await fetchRecentDataUntilMatch(
+      shopDomain,
+      accessToken,
+      "customers"
+    );
 
-    console.log(`✅ INCREMENTAL SYNC completed for ${shopDomain}:`, syncResults);
-    
+    console.log(
+      `✅ INCREMENTAL SYNC completed for ${shopDomain}:`,
+      syncResults
+    );
+
     return {
       success: true,
-      syncType: "INCREMENTAL_SYNC", 
+      syncType: "INCREMENTAL_SYNC",
       message: "Recent data sync completed",
       data: syncResults,
-      syncedAt: new Date()
+      syncedAt: new Date(),
     };
-
   } catch (error) {
     console.error("❌ Incremental sync failed:", error);
     throw error;
@@ -728,23 +761,23 @@ async function performIncrementalSync(shopDomain, accessToken) {
 // Fetch all data in batches for full sync
 async function fetchAllDataInBatches(shopDomain, accessToken, dataType) {
   const { Order, Product, Customer } = require("./models/shopifyModels.cjs");
-  
+
   let endpoint, Model, idField;
-  switch(dataType) {
-    case 'orders':
-      endpoint = 'orders.json?status=any&limit=250&order=created_at desc';
+  switch (dataType) {
+    case "orders":
+      endpoint = "orders.json?status=any&limit=250&order=created_at desc";
       Model = Order;
-      idField = 'orderId';
+      idField = "orderId";
       break;
-    case 'products': 
-      endpoint = 'products.json?limit=250';
+    case "products":
+      endpoint = "products.json?limit=250";
       Model = Product;
-      idField = 'productId';
+      idField = "productId";
       break;
-    case 'customers':
-      endpoint = 'customers.json?limit=250';
+    case "customers":
+      endpoint = "customers.json?limit=250";
       Model = Customer;
-      idField = 'customerId';
+      idField = "customerId";
       break;
     default:
       throw new Error(`Unknown data type: ${dataType}`);
@@ -759,7 +792,7 @@ async function fetchAllDataInBatches(shopDomain, accessToken, dataType) {
     try {
       batchCount++;
       console.log(`📦 Fetching ${dataType} batch ${batchCount}...`);
-      
+
       let url = `https://${shopDomain}/admin/api/2024-07/${endpoint}`;
       if (lastId) {
         url += `&since_id=${lastId}`;
@@ -767,13 +800,13 @@ async function fetchAllDataInBatches(shopDomain, accessToken, dataType) {
 
       const response = await axios.get(url, {
         headers: {
-          'X-Shopify-Access-Token': accessToken,
-          'Content-Type': 'application/json',
+          "X-Shopify-Access-Token": accessToken,
+          "Content-Type": "application/json",
         },
       });
 
       const records = response.data[dataType] || [];
-      
+
       if (records.length === 0) {
         hasMore = false;
         break;
@@ -781,13 +814,13 @@ async function fetchAllDataInBatches(shopDomain, accessToken, dataType) {
 
       // Save to database
       for (const record of records) {
-        const saveData = { 
-          ...record, 
-          shopDomain, 
-          lastUpdated: new Date()
+        const saveData = {
+          ...record,
+          shopDomain,
+          lastUpdated: new Date(),
         };
         saveData[idField] = record.id; // Map Shopify ID to model field
-        
+
         await Model.findOneAndUpdate(
           { [idField]: record.id, shopDomain },
           saveData,
@@ -797,19 +830,23 @@ async function fetchAllDataInBatches(shopDomain, accessToken, dataType) {
 
       totalRecords += records.length;
       lastId = records[records.length - 1].id;
-      
-      console.log(`✅ Batch ${batchCount}: ${records.length} ${dataType} saved (Total: ${totalRecords})`);
-      
+
+      console.log(
+        `✅ Batch ${batchCount}: ${records.length} ${dataType} saved (Total: ${totalRecords})`
+      );
+
       // If we got less than 250, we're done
       if (records.length < 250) {
         hasMore = false;
       }
 
       // Small delay to avoid rate limits
-      await new Promise(resolve => setTimeout(resolve, 500));
-
+      await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
-      console.error(`❌ Error fetching ${dataType} batch ${batchCount}:`, error.message);
+      console.error(
+        `❌ Error fetching ${dataType} batch ${batchCount}:`,
+        error.message
+      );
       throw error;
     }
   }
@@ -820,23 +857,23 @@ async function fetchAllDataInBatches(shopDomain, accessToken, dataType) {
 // Fetch recent data until we find matching records in database
 async function fetchRecentDataUntilMatch(shopDomain, accessToken, dataType) {
   const { Order, Product, Customer } = require("./models/shopifyModels.cjs");
-  
+
   let endpoint, Model, idField;
-  switch(dataType) {
-    case 'orders':
-      endpoint = 'orders.json?status=any&limit=250&order=created_at desc';
+  switch (dataType) {
+    case "orders":
+      endpoint = "orders.json?status=any&limit=250&order=created_at desc";
       Model = Order;
-      idField = 'orderId';
+      idField = "orderId";
       break;
-    case 'products': 
-      endpoint = 'products.json?limit=250';
+    case "products":
+      endpoint = "products.json?limit=250";
       Model = Product;
-      idField = 'productId';
+      idField = "productId";
       break;
-    case 'customers':
-      endpoint = 'customers.json?limit=250';
+    case "customers":
+      endpoint = "customers.json?limit=250";
       Model = Customer;
-      idField = 'customerId';
+      idField = "customerId";
       break;
     default:
       throw new Error(`Unknown data type: ${dataType}`);
@@ -847,11 +884,14 @@ async function fetchRecentDataUntilMatch(shopDomain, accessToken, dataType) {
   let hasMore = true;
   let lastId = null;
 
-  while (hasMore && checkedPages < 10) { // Limit to 10 pages for safety
+  while (hasMore && checkedPages < 10) {
+    // Limit to 10 pages for safety
     try {
       checkedPages++;
-      console.log(`🔍 Checking ${dataType} page ${checkedPages} for new records...`);
-      
+      console.log(
+        `🔍 Checking ${dataType} page ${checkedPages} for new records...`
+      );
+
       let url = `https://${shopDomain}/admin/api/2024-07/${endpoint}`;
       if (lastId) {
         url += `&since_id=${lastId}`;
@@ -859,13 +899,13 @@ async function fetchRecentDataUntilMatch(shopDomain, accessToken, dataType) {
 
       const response = await axios.get(url, {
         headers: {
-          'X-Shopify-Access-Token': accessToken,
-          'Content-Type': 'application/json',
+          "X-Shopify-Access-Token": accessToken,
+          "Content-Type": "application/json",
         },
       });
 
       const records = response.data[dataType] || [];
-      
+
       if (records.length === 0) {
         hasMore = false;
         break;
@@ -876,14 +916,16 @@ async function fetchRecentDataUntilMatch(shopDomain, accessToken, dataType) {
 
       // Check each record to see if it exists in database
       for (const record of records) {
-        const existingRecord = await Model.findOne({ 
-          [idField]: record.id, 
-          shopDomain 
+        const existingRecord = await Model.findOne({
+          [idField]: record.id,
+          shopDomain,
         });
 
         if (existingRecord) {
           // Found existing record - we can stop here
-          console.log(`🎯 Found matching ${dataType} record (ID: ${record.id}) - stopping sync`);
+          console.log(
+            `🎯 Found matching ${dataType} record (ID: ${record.id}) - stopping sync`
+          );
           foundMatch = true;
           break;
         } else {
@@ -894,13 +936,13 @@ async function fetchRecentDataUntilMatch(shopDomain, accessToken, dataType) {
 
       // Save new records
       for (const record of recordsToSave) {
-        const saveData = { 
-          ...record, 
-          shopDomain, 
-          lastUpdated: new Date()
+        const saveData = {
+          ...record,
+          shopDomain,
+          lastUpdated: new Date(),
         };
         saveData[idField] = record.id; // Map Shopify ID to model field
-        
+
         await Model.findOneAndUpdate(
           { [idField]: record.id, shopDomain },
           saveData,
@@ -910,7 +952,9 @@ async function fetchRecentDataUntilMatch(shopDomain, accessToken, dataType) {
       }
 
       if (recordsToSave.length > 0) {
-        console.log(`✅ Page ${checkedPages}: ${recordsToSave.length} new ${dataType} saved`);
+        console.log(
+          `✅ Page ${checkedPages}: ${recordsToSave.length} new ${dataType} saved`
+        );
       }
 
       // If we found a match or got less than 250 records, we're done
@@ -921,10 +965,12 @@ async function fetchRecentDataUntilMatch(shopDomain, accessToken, dataType) {
       }
 
       // Small delay to avoid rate limits
-      await new Promise(resolve => setTimeout(resolve, 300));
-
+      await new Promise((resolve) => setTimeout(resolve, 300));
     } catch (error) {
-      console.error(`❌ Error fetching recent ${dataType} page ${checkedPages}:`, error.message);
+      console.error(
+        `❌ Error fetching recent ${dataType} page ${checkedPages}:`,
+        error.message
+      );
       throw error;
     }
   }
@@ -949,24 +995,30 @@ app.post("/api/shopify/manual-sync", async (req, res) => {
       fullShopDomain = `${shop}.myshopify.com`;
     }
 
-    console.log(`🔄 Manual ${syncType} sync triggered for ${fullShopDomain}...`);
+    console.log(
+      `🔄 Manual ${syncType} sync triggered for ${fullShopDomain}...`
+    );
 
     let result;
     if (syncType === "full") {
       console.log(`🆕 Performing MANUAL FULL sync for ${fullShopDomain}`);
       result = await performFullSync(fullShopDomain, accessToken);
     } else {
-      console.log(`🔄 Performing MANUAL INCREMENTAL sync for ${fullShopDomain}`);
+      console.log(
+        `🔄 Performing MANUAL INCREMENTAL sync for ${fullShopDomain}`
+      );
       result = await performIncrementalSync(fullShopDomain, accessToken);
     }
 
     res.json(result);
-
   } catch (error) {
-    console.error("❌ Manual sync failed:", error.response?.data || error.message);
-    res.status(500).json({ 
-      error: "Failed to perform manual sync", 
-      details: error.response?.data || error.message 
+    console.error(
+      "❌ Manual sync failed:",
+      error.response?.data || error.message
+    );
+    res.status(500).json({
+      error: "Failed to perform manual sync",
+      details: error.response?.data || error.message,
     });
   }
 });
