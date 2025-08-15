@@ -182,19 +182,19 @@ export const ShopifyProvider: React.FC<ShopifyProviderProps> = ({
     }
 
     try {
-      console.log("🚀 Starting comprehensive data sync (ALL data)...");
+      console.log("🎯 Starting smart data sync (latest data check)...");
       const shopDomain = shopData?.domain || shopifyAPI.getShopDomain();
       const accessToken = shopifyAPI.getAccessToken();
 
       if (!shopDomain || !accessToken) {
         console.error(
-          "Missing shop domain or access token for comprehensive sync"
+          "Missing shop domain or access token for smart sync"
         );
         return;
       }
 
       const response = await fetch(
-        "http://localhost:3001/api/shopify/comprehensive-sync",
+        "http://localhost:3001/api/shopify/smart-sync",
         {
           method: "POST",
           headers: {
@@ -208,15 +208,15 @@ export const ShopifyProvider: React.FC<ShopifyProviderProps> = ({
       );
 
       if (!response.ok) {
-        throw new Error(`Comprehensive sync failed: ${response.statusText}`);
+        throw new Error(`Smart sync failed: ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log("✅ Comprehensive sync completed:", result.results);
+      console.log("✅ Smart sync completed:", result.results);
     } catch (err) {
-      console.error("❌ Comprehensive sync failed:", err);
+      console.error("❌ Smart sync failed:", err);
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      setError(`Failed to sync all data: ${errorMessage}`);
+      setError(`Failed to sync latest data: ${errorMessage}`);
     }
   };
 

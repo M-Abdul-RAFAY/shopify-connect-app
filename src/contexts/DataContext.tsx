@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import {
   ShopifyProduct,
   ShopifyOrder,
@@ -8,6 +8,7 @@ import {
 } from "../services/shopifyAPI";
 import cachedDataService from "../services/cachedDataService";
 import { useShopify } from "./ShopifyContext";
+import { syncProgressService, SyncProgress } from "../services/syncProgressService";
 
 interface AnalyticsData {
   totalRevenue: number;
@@ -144,6 +145,80 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
   const [error, setError] = useState<string | null>(null);
   const [hasData, setHasData] = useState(false);
 
+  // Start monitoring sync progress when shop connects
+  useEffect(() => {
+    if (isConnected && shopData) {
+      const shopDomain = shopData.myshopify_domain || shopData.domain || "";
+      if (shopDomain) {
+        console.log("🎯 Starting sync progress monitoring for:", shopDomain);
+        
+        // Start listening to sync progress
+        syncProgressService.startListening(shopDomain, (progress: SyncProgress) => {
+          console.log("📊 Received sync progress:", progress);
+          
+          setLoading({
+            isLoading: progress.status === 'running',
+            stage: progress.stage,
+            progress: progress.progress,
+            details: progress.details,
+          });
+
+          // If sync completed, refresh data from database automatically
+          if (progress.status === 'completed') {
+            setTimeout(async () => {
+              console.log("✅ Smart sync completed, refreshing data from database...");
+              try {
+                // Use existing shop data and fetch from cache
+                const shopDomain = shopData.myshopify_domain || shopData.domain || "";
+                const accessToken = shopifyAPI.getAccessToken();
+                
+                // Fetch fresh data from database
+                updateProgress("Loading", 50, "Loading fresh data from database...");
+                
+                const [productsRes, ordersRes, customersRes] = await Promise.all([
+                  cachedDataService.getProducts(shopDomain, accessToken || undefined, { limit: 10000 }),
+                  cachedDataService.getOrders(shopDomain, accessToken || undefined, { limit: 10000 }),
+                  cachedDataService.getCustomers(shopDomain, accessToken || undefined, { limit: 10000 })
+                ]);
+
+                // Update data
+                setData({
+                  products: productsRes.products || [],
+                  orders: ordersRes.orders || [],
+                  customers: customersRes.customers || [],
+                  shop: shopData,
+                  analytics: calculateAnalyticsFromData(
+                    productsRes.products || [],
+                    ordersRes.orders || [],
+                    customersRes.customers || []
+                  ),
+                });
+                
+                setHasData(true);
+                console.log("✅ Fresh data loaded from database");
+              } catch (error) {
+                console.error("Error loading fresh data:", error);
+              } finally {
+                // Clear loading state
+                setLoading({ isLoading: false, stage: "", progress: 0, details: "" });
+              }
+            }, 1000);
+          }
+        });
+      }
+    }
+
+    // Cleanup on unmount or disconnect
+    return () => {
+      if (shopData) {
+        const shopDomain = shopData.myshopify_domain || shopData.domain || "";
+        if (shopDomain) {
+          syncProgressService.stopListening(shopDomain);
+        }
+      }
+    };
+  }, [isConnected, shopData]);
+
   const updateProgress = (stage: string, progress: number, details: string) => {
     setLoading({ isLoading: true, stage, progress, details });
   };
@@ -239,9 +314,59 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [isConnected, shopData]);
 
   const refreshData = useCallback(async () => {
-    setHasData(false); // Reset data state to show loading
-    await fetchAllData();
-  }, [fetchAllData]);
+    if (!isConnected || !shopData) return;
+
+    console.log("🔄 Refreshing data - fetching latest from Shopify...");
+    
+    const shopDomain = shopData.myshopify_domain || shopData.domain || "";
+    const accessToken = shopifyAPI.getAccessToken();
+
+    if (!shopDomain || !accessToken) {
+      console.error("Missing shop domain or access token for refresh");
+      return;
+    }
+
+    setLoading({
+      isLoading: true,
+      stage: "Refreshing",
+      progress: 10,
+      details: "Fetching latest data from Shopify...",
+    });
+
+    try {
+      // Trigger smart sync to get latest data
+      const response = await fetch(
+        "http://localhost:3001/api/shopify/smart-sync",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            shop: shopDomain,
+            accessToken: accessToken,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Smart sync failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("✅ Data refresh completed:", result.results);
+
+      // After smart sync, fetch updated data from database
+      setHasData(false); // Reset data state
+      await fetchAllData();
+      
+    } catch (error) {
+      console.error("❌ Data refresh failed:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      setError(`Failed to refresh data: ${errorMessage}`);
+      setLoading({ isLoading: false, stage: "", progress: 0, details: "" });
+    }
+  }, [isConnected, shopData, fetchAllData]);
 
   const value: DataContextType = {
     data,

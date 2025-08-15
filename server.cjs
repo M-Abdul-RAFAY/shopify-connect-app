@@ -14,6 +14,9 @@ const {
   Customer,
 } = require("./models/shopifyModels.cjs");
 
+// Progress tracking for comprehensive sync
+const syncProgress = new Map();
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -1003,6 +1006,247 @@ app.get("/api/shopify/fresh-customers", async (req, res) => {
   }
 });
 
+// Server-Sent Events endpoint for comprehensive sync progress
+app.get("/api/shopify/sync-progress/:shopDomain", (req, res) => {
+  const { shopDomain } = req.params;
+  
+  // Set headers for SSE
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Cache-Control'
+  });
+
+  // Send initial connection
+  res.write(`data: ${JSON.stringify({ type: 'connected', shopDomain })}\n\n`);
+
+  // Send current progress if available
+  const currentProgress = syncProgress.get(shopDomain);
+  if (currentProgress) {
+    res.write(`data: ${JSON.stringify({ type: 'progress', ...currentProgress })}\n\n`);
+  }
+
+  // Keep connection alive and send progress updates
+  const progressInterval = setInterval(() => {
+    const progress = syncProgress.get(shopDomain);
+    if (progress) {
+      res.write(`data: ${JSON.stringify({ type: 'progress', ...progress })}\n\n`);
+      
+      // If sync is complete, end the connection
+      if (progress.status === 'completed' || progress.status === 'error') {
+        clearInterval(progressInterval);
+        res.write(`data: ${JSON.stringify({ type: 'end' })}\n\n`);
+        res.end();
+      }
+    }
+  }, 1000); // Send updates every second
+
+  // Handle client disconnect
+  req.on('close', () => {
+    clearInterval(progressInterval);
+  });
+});
+
+// Smart sync system - Checks for new data first, then decides on full sync
+app.post("/api/shopify/smart-sync", async (req, res) => {
+  try {
+    const { shop, accessToken } = req.body;
+
+    if (!shop || !accessToken) {
+      return res.status(400).json({
+        error: "Missing required parameters: shop and accessToken",
+      });
+    }
+
+    // Ensure MongoDB connection is active
+    if (!dbConnection.isConnected) {
+      console.log("🔗 Reconnecting to MongoDB for smart sync...");
+      await dbConnection.connect();
+    }
+
+    // Ensure we're using the full .myshopify.com domain
+    let fullShopDomain = shop;
+    if (!shop.includes(".myshopify.com")) {
+      fullShopDomain = `${shop}.myshopify.com`;
+    }
+
+    console.log(`🎯 Starting smart sync for ${fullShopDomain}...`);
+
+    const syncResults = {
+      strategy: "smart",
+      orders: { fetched: 0, new: 0, updated: 0, existingInDB: 0 },
+      products: { fetched: 0, new: 0, updated: 0, existingInDB: 0 },
+      customers: { fetched: 0, new: 0, updated: 0, existingInDB: 0 },
+      needsFullSync: false,
+      fullSyncTriggered: false,
+    };
+
+    // Helper function to update progress
+    const updateProgress = (stage, progress, details) => {
+      const progressData = {
+        stage,
+        progress,
+        details,
+        status: 'running'
+      };
+      syncProgress.set(fullShopDomain, progressData);
+      console.log(`📊 Smart Sync Progress: ${stage} - ${progress}% - ${details}`);
+    };
+
+    updateProgress("Initializing", 5, "Starting smart data sync...");
+
+    // Step 1: Check latest 250 orders
+    updateProgress("Orders", 10, "Checking latest 250 orders...");
+    
+    const latestOrdersResponse = await axios.get(
+      `https://${fullShopDomain}/admin/api/2024-07/orders.json?status=any&limit=250&order=created_at desc`,
+      {
+        headers: {
+          "X-Shopify-Access-Token": accessToken,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const latestOrders = latestOrdersResponse.data.orders || [];
+    syncResults.orders.fetched = latestOrders.length;
+
+    updateProgress("Orders", 25, `Analyzing ${latestOrders.length} recent orders...`);
+
+    // Check how many of these orders already exist in our database
+    let newOrdersCount = 0;
+    let updatedOrdersCount = 0;
+    
+    for (const order of latestOrders) {
+      const existingOrder = await Order.findOne({
+        orderId: order.id,
+        shopDomain: fullShopDomain,
+      });
+
+      if (!existingOrder) {
+        newOrdersCount++;
+        // Store new order
+        await Order.create({
+          orderId: order.id,
+          shopDomain: fullShopDomain,
+          name: order.name,
+          email: order.email,
+          total_price: order.total_price,
+          financial_status: order.financial_status,
+          fulfillment_status: order.fulfillment_status,
+          created_at: order.created_at,
+          updated_at: order.updated_at,
+          currency: order.currency,
+          customer: order.customer,
+          line_items: order.line_items,
+          shipping_address: order.shipping_address,
+          billing_address: order.billing_address,
+          raw_data: order,
+        });
+      } else if (new Date(order.updated_at) > new Date(existingOrder.updated_at)) {
+        updatedOrdersCount++;
+        // Update existing order
+        await Order.updateOne(
+          { orderId: order.id, shopDomain: fullShopDomain },
+          {
+            email: order.email,
+            total_price: order.total_price,
+            financial_status: order.financial_status,
+            fulfillment_status: order.fulfillment_status,
+            updated_at: order.updated_at,
+            customer: order.customer,
+            line_items: order.line_items,
+            shipping_address: order.shipping_address,
+            billing_address: order.billing_address,
+            raw_data: order,
+          }
+        );
+      }
+    }
+
+    syncResults.orders.new = newOrdersCount;
+    syncResults.orders.updated = updatedOrdersCount;
+    syncResults.orders.existingInDB = latestOrders.length - newOrdersCount;
+
+    updateProgress("Orders", 50, `Found ${newOrdersCount} new orders, ${updatedOrdersCount} updated`);
+
+    // Determine if we need full sync (if more than 10% of recent orders are new)
+    const newOrdersPercentage = (newOrdersCount / latestOrders.length) * 100;
+    if (newOrdersPercentage > 10 && newOrdersCount > 25) {
+      syncResults.needsFullSync = true;
+      updateProgress("Analysis", 60, `${newOrdersPercentage.toFixed(1)}% new orders detected. Full sync recommended.`);
+    } else {
+      updateProgress("Products", 60, "Checking recent products...");
+      
+      // Quick check of recent products
+      const latestProductsResponse = await axios.get(
+        `https://${fullShopDomain}/admin/api/2024-07/products.json?limit=50&order=updated_at desc`,
+        {
+          headers: {
+            "X-Shopify-Access-Token": accessToken,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const latestProducts = latestProductsResponse.data.products || [];
+      syncResults.products.fetched = latestProducts.length;
+
+      updateProgress("Customers", 80, "Checking recent customers...");
+
+      // Quick check of recent customers  
+      const latestCustomersResponse = await axios.get(
+        `https://${fullShopDomain}/admin/api/2024-07/customers.json?limit=50&order=updated_at desc`,
+        {
+          headers: {
+            "X-Shopify-Access-Token": accessToken,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const latestCustomers = latestCustomersResponse.data.customers || [];
+      syncResults.customers.fetched = latestCustomers.length;
+    }
+
+    updateProgress("Complete", 100, `Smart sync completed. ${newOrdersCount} new orders added.`);
+
+    // Final progress update
+    const completionData = {
+      stage: "Complete",
+      progress: 100,
+      details: `✅ Smart sync completed! ${newOrdersCount} new orders, ${updatedOrdersCount} updated`,
+      status: 'completed'
+    };
+    syncProgress.set(fullShopDomain, completionData);
+
+    res.json({
+      success: true,
+      message: "Smart sync completed successfully",
+      results: syncResults,
+    });
+
+  } catch (error) {
+    console.error("❌ Smart sync failed:", error.message);
+    
+    // Update progress on error
+    const errorData = {
+      stage: "Error",
+      progress: 0,
+      details: `❌ Smart sync failed: ${error.message}`,
+      status: 'error'
+    };
+    syncProgress.set(fullShopDomain, errorData);
+    
+    res.status(500).json({
+      error: "Failed to complete smart sync",
+      details: error.message,
+    });
+  }
+});
+
 // Comprehensive sync system - Fetches ALL data and stores in DB with deduplication
 app.post("/api/shopify/comprehensive-sync", async (req, res) => {
   try {
@@ -1012,6 +1256,12 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
       return res.status(400).json({
         error: "Missing required parameters: shop and accessToken",
       });
+    }
+
+    // Ensure MongoDB connection is active
+    if (!dbConnection.isConnected) {
+      console.log("🔗 Reconnecting to MongoDB for comprehensive sync...");
+      await dbConnection.connect();
     }
 
     // Ensure we're using the full .myshopify.com domain
@@ -1031,8 +1281,34 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
       status: "running",
     };
 
+    // Helper function to update progress
+    const updateProgress = (stage, progress, details, currentResults = syncResults) => {
+      const progressData = {
+        stage,
+        progress,
+        details,
+        results: currentResults,
+        status: 'running'
+      };
+      syncProgress.set(fullShopDomain, progressData);
+      console.log(`📊 Progress: ${stage} - ${progress}% - ${details}`);
+    };
+
+    // Helper function to ensure MongoDB connection
+    const ensureDBConnection = async () => {
+      if (!dbConnection.isConnected) {
+        console.log("🔗 Reconnecting to MongoDB during sync...");
+        await dbConnection.connect();
+      }
+    };
+
+    // Initialize progress
+    updateProgress("Initializing", 0, "Starting comprehensive sync...");
+
     // Step 1: Sync Orders
     console.log(`📦 Step 1: Syncing ALL orders...`);
+    updateProgress("Orders", 10, "Starting to fetch all orders from Shopify...");
+    
     try {
       let allOrders = [];
       let hasNextPage = true;
@@ -1063,6 +1339,10 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
           `📦 Orders page ${pageCount}: ${orders.length} orders (Total: ${allOrders.length})`
         );
 
+        // Update progress during fetching - progressive increase
+        const progressPercentage = Math.min(10 + Math.floor((pageCount / 100) * 25), 35); // Progress from 10% to 35% over ~100 pages
+        updateProgress("Orders", progressPercentage, `Fetched ${allOrders.length} orders (page ${pageCount})`);
+
         // Check for pagination
         const linkHeader = response.headers.link;
         if (linkHeader && linkHeader.includes('rel="next"')) {
@@ -1077,10 +1357,20 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
       }
 
       syncResults.orders.total = allOrders.length;
+      updateProgress("Orders", 40, `Storing ${allOrders.length} orders in database...`);
+
+      // Ensure database connection before bulk operations
+      await ensureDBConnection();
 
       // Store orders in database with deduplication
+      let processedCount = 0;
       for (const order of allOrders) {
         try {
+          // Check database connection every 1000 operations
+          if (processedCount % 1000 === 0) {
+            await ensureDBConnection();
+          }
+
           const existingOrder = await Order.findOne({
             orderId: order.id,
             shopDomain: fullShopDomain,
@@ -1132,11 +1422,19 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
             });
             syncResults.orders.new++;
           }
+          
+          processedCount++;
+          // Update progress every 100 orders processed
+          if (processedCount % 100 === 0) {
+            const progressPercentage = 40 + Math.floor((processedCount / allOrders.length) * 10); // 40% to 50%
+            updateProgress("Orders", progressPercentage, `Processed ${processedCount}/${allOrders.length} orders`);
+          }
         } catch (err) {
           console.error(`Error storing order ${order.id}:`, err.message);
           syncResults.orders.errors++;
         }
       }
+      updateProgress("Orders", 50, `✅ Completed ${allOrders.length} orders sync`);
     } catch (error) {
       console.error("❌ Orders sync failed:", error.message);
       syncResults.orders.errors++;
@@ -1144,6 +1442,7 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
 
     // Step 2: Sync Products
     console.log(`📦 Step 2: Syncing ALL products...`);
+    updateProgress("Products", 50, "Starting to fetch all products from Shopify...");
     try {
       let allProducts = [];
       let hasNextPage = true;
@@ -1172,6 +1471,10 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
           `📦 Products page ${pageCount}: ${products.length} products (Total: ${allProducts.length})`
         );
 
+        // Update progress during fetching
+        const progressPercentage = Math.min(50 + (pageCount * 1), 65); // Progress from 50% to 65%
+        updateProgress("Products", progressPercentage, `Fetched ${allProducts.length} products (page ${pageCount})`);
+
         // Check for pagination
         const linkHeader = response.headers.link;
         if (linkHeader && linkHeader.includes('rel="next"')) {
@@ -1186,8 +1489,10 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
       }
 
       syncResults.products.total = allProducts.length;
+      updateProgress("Products", 70, `Storing ${allProducts.length} products in database...`);
 
       // Store products in database with deduplication
+      let processedProductCount = 0;
       for (const product of allProducts) {
         try {
           const existingProduct = await Product.findOne({
@@ -1236,11 +1541,19 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
             });
             syncResults.products.new++;
           }
+          
+          processedProductCount++;
+          // Update progress every 50 products processed
+          if (processedProductCount % 50 === 0) {
+            const progressPercentage = 70 + Math.floor((processedProductCount / allProducts.length) * 5); // 70% to 75%
+            updateProgress("Products", progressPercentage, `Processed ${processedProductCount}/${allProducts.length} products`);
+          }
         } catch (err) {
           console.error(`Error storing product ${product.id}:`, err.message);
           syncResults.products.errors++;
         }
       }
+      updateProgress("Products", 75, `✅ Completed ${allProducts.length} products sync`);
     } catch (error) {
       console.error("❌ Products sync failed:", error.message);
       syncResults.products.errors++;
@@ -1248,6 +1561,7 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
 
     // Step 3: Sync Customers
     console.log(`📦 Step 3: Syncing ALL customers...`);
+    updateProgress("Customers", 75, "Starting to fetch all customers from Shopify...");
     try {
       let allCustomers = [];
       let hasNextPage = true;
@@ -1276,6 +1590,10 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
           `📦 Customers page ${pageCount}: ${customers.length} customers (Total: ${allCustomers.length})`
         );
 
+        // Update progress during fetching
+        const progressPercentage = Math.min(75 + (pageCount * 1), 85); // Progress from 75% to 85%
+        updateProgress("Customers", progressPercentage, `Fetched ${allCustomers.length} customers (page ${pageCount})`);
+
         // Check for pagination
         const linkHeader = response.headers.link;
         if (linkHeader && linkHeader.includes('rel="next"')) {
@@ -1290,8 +1608,10 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
       }
 
       syncResults.customers.total = allCustomers.length;
+      updateProgress("Customers", 90, `Storing ${allCustomers.length} customers in database...`);
 
       // Store customers in database with deduplication
+      let processedCustomerCount = 0;
       for (const customer of allCustomers) {
         try {
           const existingCustomer = await Customer.findOne({
@@ -1344,11 +1664,19 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
             });
             syncResults.customers.new++;
           }
+          
+          processedCustomerCount++;
+          // Update progress every 50 customers processed
+          if (processedCustomerCount % 50 === 0) {
+            const progressPercentage = 90 + Math.floor((processedCustomerCount / allCustomers.length) * 5); // 90% to 95%
+            updateProgress("Customers", progressPercentage, `Processed ${processedCustomerCount}/${allCustomers.length} customers`);
+          }
         } catch (err) {
           console.error(`Error storing customer ${customer.id}:`, err.message);
           syncResults.customers.errors++;
         }
       }
+      updateProgress("Customers", 95, `✅ Completed ${allCustomers.length} customers sync`);
     } catch (error) {
       console.error("❌ Customers sync failed:", error.message);
       syncResults.customers.errors++;
@@ -1363,6 +1691,9 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
       syncResults
     );
 
+    // Final progress update
+    updateProgress("Complete", 100, `✅ Sync completed! ${syncResults.orders.total} orders, ${syncResults.products.total} products, ${syncResults.customers.total} customers`, syncResults);
+
     res.json({
       success: true,
       message: "Comprehensive sync completed successfully",
@@ -1370,6 +1701,16 @@ app.post("/api/shopify/comprehensive-sync", async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Comprehensive sync failed:", error.message);
+    
+    // Update progress on error
+    const errorData = {
+      stage: "Error",
+      progress: 0,
+      details: `❌ Sync failed: ${error.message}`,
+      status: 'error'
+    };
+    syncProgress.set(fullShopDomain, errorData);
+    
     res.status(500).json({
       error: "Failed to complete comprehensive sync",
       details: error.message,

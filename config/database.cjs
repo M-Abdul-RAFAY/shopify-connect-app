@@ -21,8 +21,11 @@ class DatabaseConnection {
 
     const options = {
       maxPoolSize: 10, // Maintain up to 10 socket connections
-      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      serverSelectionTimeoutMS: 30000, // Keep trying to send operations for 30 seconds
+      socketTimeoutMS: 0, // No timeout for socket inactivity (for long operations)
+      connectTimeoutMS: 30000, // Give up initial connection after 30 seconds
+      heartbeatFrequencyMS: 10000, // Send heartbeat every 10 seconds
+      maxIdleTimeMS: 0, // No idle timeout
       family: 4, // Use IPv4, skip trying IPv6
       bufferCommands: false, // Disable mongoose buffering
     };

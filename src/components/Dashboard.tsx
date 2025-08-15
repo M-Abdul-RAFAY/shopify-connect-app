@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useData } from "../contexts/DataContext";
 import { useNavigation } from "../contexts/NavigationContext";
+import LoadingProgress from "./LoadingProgress";
 
 const Dashboard = () => {
   const { data, loading, error } = useData();
@@ -21,27 +22,11 @@ const Dashboard = () => {
 
   if (loading.isLoading) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Loading your store data...
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-pulse"
-            >
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <LoadingProgress
+        stage={loading.stage || "Initializing"}
+        progress={loading.progress || 0}
+        details={loading.details || "Loading your store data..."}
+      />
     );
   }
 
